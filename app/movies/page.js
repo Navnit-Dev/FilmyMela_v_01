@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -16,7 +16,7 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 
-export default function MoviesPage() {
+function MoviesContent() {
   const searchParams = useSearchParams();
   
   const [movies, setMovies] = useState([]);
@@ -322,5 +322,35 @@ export default function MoviesPage() {
 
       <Footer />
     </main>
+  );
+}
+
+function MoviesLoading() {
+  return (
+    <main className="min-h-screen bg-[var(--surface)]">
+      <Navbar />
+      <div className="pt-20 lg:pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="font-display font-bold text-2xl lg:text-3xl text-[var(--on-surface)] mb-2">
+                Browse Movies
+              </h1>
+              <p className="text-[var(--on-surface-variant)]">Loading...</p>
+            </div>
+          </div>
+          <SkeletonGrid count={12} />
+        </div>
+      </div>
+      <Footer />
+    </main>
+  );
+}
+
+export default function MoviesPage() {
+  return (
+    <Suspense fallback={<MoviesLoading />}>
+      <MoviesContent />
+    </Suspense>
   );
 }
