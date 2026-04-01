@@ -41,14 +41,33 @@ export async function POST(request) {
 
     const sequence = (maxSeq?.[0]?.sequence || 0) + 1;
 
+    // Prepare movie data - exclude old fields and clean up empty strings
+    const { genre_ids, industry_ids, genres, industries, genre_names, industry_names, ...movieFields } = body;
+    
+    // Clean up empty strings for integer fields
+    const integerFields = ['tmdb_id', 'mal_id', 'tvmaze_id', 'total_episodes', 'seasons'];
+    const cleanedFields = { ...movieFields };
+    
+    integerFields.forEach(field => {
+      if (cleanedFields[field] === '' || cleanedFields[field] === undefined) {
+        cleanedFields[field] = null;
+      } else if (cleanedFields[field]) {
+        cleanedFields[field] = parseInt(cleanedFields[field]) || null;
+      }
+    });
+    
+    const movieData = {
+      ...cleanedFields,
+      genre: genre_names || [],
+      industry: industry_names?.[0] || [],
+      sequence,
+      created_by: user.id
+    };
+
     // Insert movie
     const { data, error } = await supabase
       .from('movies')
-      .insert({
-        ...body,
-        sequence,
-        created_by: user.id
-      })
+      .insert(movieData)
       .select()
       .single();
 
@@ -155,31 +174,49 @@ function formatTelegramMessage(movie) {
     .map(([quality, url]) => `    <b>${quality}</b> • <a href="${url}">📥 Download</a>`)
     .join('\n');
 
-  const genres = movie.genre?.join('  •  ') || 'N/A';
-  
-  // Rating stars
-  const stars = '⭐'.repeat(Math.floor(movie.rating / 2)) + '☆'.repeat(5 - Math.floor(movie.rating / 2));
+  // Handle download parts for series/anime
+  let partsInfo = '';
+  if (movie.is_in_parts && movie.download_parts && movie.download_parts.length > 0) {
+    partsInfo = movie.download_parts.map(part => {
+      const partLinks = Object.entries(part.downloads || {})
+        .map(([quality, url]) => `      ${quality}: <a href="${url}">📥</a>`)
+        .join('\n');
+      return `\n📦 <b>${part.name}</b> (${part.episode_range})\n${partLinks}`;
+    }).join('\n');
+  }
+
+  // Content type display
+  const contentTypeLabels = {
+    movie: '🎬 Movie',
+    web_series: '📺 Web Series',
+    anime: '🎌 Anime'
+  };
+  const contentTypeDisplay = contentTypeLabels[movie.content_type] || '🎬 Movie';
+
+  // Episode info for series/anime
+  let episodeInfo = '';
+  if (movie.content_type !== 'movie') {
+    episodeInfo = `    📺 <b>Episodes:</b> ${movie.total_episodes || 'N/A'}\n    📅 <b>Seasons:</b> ${movie.seasons || 'N/A'}\n`;
+  }
   
   return `
-
-<b>🎬 NEW MOVIE ADDED</b>
+<b>🎬 NEW ${movie.content_type === 'movie' ? 'MOVIE' : 'SERIES'} ADDED</b>
 
 <b>🎭 ${movie.name}</b>
+<b>${contentTypeDisplay}</b>
 
 <b>📊 Info:</b>
     📅 <b>Year:</b> ${movie.release_year}
-    ⭐ <b>Rating:</b> ${stars} (${movie.rating}/10)
-    🎭 <b>Genre:</b> ${genres}
-    🎬 <b>Industry:</b> ${movie.industry || 'N/A'}
-    ⏱ <b>Duration:</b> ${movie.duration || 'N/A'}
+    ⭐ <b>Rating:</b> ${movie.rating}/10
+${episodeInfo}${movie.tagline ? `    💬 <b>Tagline:</b> ${movie.tagline}\n` : ''}
 
 <b>📝 Synopsis:</b>
-<i>${movie.description?.substring(0, 250)}${movie.description?.length > 250 ? '...' : ''}</i>
+<i>${movie.description?.substring(0, 300)}${movie.description?.length > 300 ? '...' : ''}</i>
 
-${downloadLinks ? `\n<b>💾 Download Options:</b>\n${downloadLinks}\n` : ''}
+${movie.is_in_parts && partsInfo ? `<b>📦 Download Parts:</b>${partsInfo}\n` : (downloadLinks ? `<b>💾 Download Options:</b>\n${downloadLinks}\n` : '')}
 
-<b>▶️ WATCH ONLINE NOW </b>
-<a href="${process.env.NEXT_PUBLIC_APP_URL}/movie/${movie.id}">Click Here :🎬 FilmyMela</a>
-  🎬 <b>FilmyMela</b> • HD Movies  │
-   Stream & Download   │  `.trim();
+<b>▶️ WATCH ONLINE NOW</b>
+<a href="${process.env.NEXT_PUBLIC_APP_URL}/movie/${movie.id}">🎬 Click Here to Watch on FilmyMela</a>
+
+🎬 <b>FilmyMela</b> • Stream & Download HD Movies`.trim();
 }

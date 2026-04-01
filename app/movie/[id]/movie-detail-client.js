@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ExternalLink,
   Users,
+  Package,
   X,
   Link as LinkIcon,
   Facebook,
@@ -305,6 +306,69 @@ export default function MovieDetailClient({ movie }) {
                       >
                         {actor}
                       </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Scene Images Gallery */}
+              {movie.scenes_gallery?.length > 0 && (
+                <div>
+                  <h3 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Scene Gallery
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {movie.scenes_gallery.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-video rounded-lg overflow-hidden">
+                          <img
+                            src={url}
+                            alt={`Scene ${index + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225"%3E%3Crect width="400" height="225" fill="%23374151"/%3E%3Ctext x="200" y="112.5" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="14" font-family="sans-serif"%3EImage Not Available%3C/text%3E%3C/svg%3E';
+                            }}
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-xs text-white">Scene {index + 1}</p>
+                          </div>
+                        </div>
+                        {/* Lightbox trigger */}
+                        <button
+                          onClick={() => {
+                            // Simple lightbox implementation
+                            const lightbox = document.createElement('div');
+                            lightbox.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4';
+                            lightbox.innerHTML = `
+                              <div class="relative max-w-4xl max-h-[90vh]">
+                                <img src="${url}" alt="Scene ${index + 1}" class="w-full h-full object-contain rounded-lg" />
+                                <button class="absolute top-4 right-4 p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors">
+                                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            `;
+                            lightbox.onclick = (e) => {
+                              if (e.target === lightbox || e.target.tagName === 'BUTTON') {
+                                document.body.removeChild(lightbox);
+                              }
+                            };
+                            document.body.appendChild(lightbox);
+                          }}
+                          className="absolute inset-0 w-full h-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          aria-label={`View scene ${index + 1} in full size`}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
+                              <ExternalLink className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>

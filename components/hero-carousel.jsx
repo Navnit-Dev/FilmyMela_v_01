@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight, Info, Star, Clock } from 'lucide-react';
 
 export function HeroCarousel({ movies }) {
@@ -22,8 +22,7 @@ export function HeroCarousel({ movies }) {
 
   useEffect(() => {
     if (!isAutoPlaying || slides.length <= 1) return;
-    
-    const interval = setInterval(nextSlide, 6000);
+    const interval = setInterval(nextSlide, 5000);
     return () => clearInterval(interval);
   }, [isAutoPlaying, slides.length, nextSlide]);
 
@@ -32,100 +31,105 @@ export function HeroCarousel({ movies }) {
   const currentMovie = slides[currentIndex];
 
   return (
-    <section 
-      className="relative w-full aspect-hero lg:aspect-[21/9] overflow-hidden"
+    <section
+      className="relative w-full h-[70vh] sm:h-[75vh] lg:h-[85vh] overflow-hidden"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
-      {/* Background Images */}
+      {/* Background */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, scale: 1.1 }}
+          initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
           <Image
-            src={currentMovie.poster_url || '/placeholder-hero.jpg'}
+            src={currentMovie.poster_url || '/placeholder.jpg'}
             alt={currentMovie.name}
             fill
-            className="object-cover"
             priority
-            sizes="100vw"
+            className="object-cover"
           />
-          {/* Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface)] via-[var(--surface)]/70 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface)] via-transparent to-transparent" />
+
+          {/* Cleaner overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="relative z-10 h-full flex items-end lg:items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 lg:pb-0 w-full">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-              className="max-w-2xl"
+              exit={{ opacity: 0, y: -25 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-xl"
             >
               {/* Badges */}
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {currentMovie.trending && (
-                  <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-[var(--primary)] text-[var(--on-primary)] rounded-full">
-                    Trending Now
+                  <span className="px-2.5 py-1 text-xs bg-red-500 text-white rounded-md">
+                    Trending
                   </span>
                 )}
-                <span className="px-3 py-1 text-xs font-medium bg-[var(--surface-container)]/80 backdrop-blur-sm rounded-full text-[var(--on-surface-variant)]">
-                  {currentMovie.industry}
+                {currentMovie.featured && (
+                  <span className="px-2.5 py-1 text-xs bg-purple-500 text-white rounded-md">
+                    Featured
+                  </span>
+                )}
+                <span className="px-2.5 py-1 text-xs bg-white/10 border border-white/20 rounded-md text-white/80">
+                  {Array.isArray(currentMovie.industry)
+                    ? currentMovie.industry[0]
+                    : currentMovie.industry}
                 </span>
-                <div className="flex items-center gap-1 px-3 py-1 bg-[var(--surface-container)]/80 backdrop-blur-sm rounded-full">
-                  <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                  <span className="text-xs font-medium">{currentMovie.rating}</span>
-                </div>
               </div>
 
               {/* Title */}
-              <h1 className="font-display font-bold text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight">
                 {currentMovie.name}
               </h1>
 
-              {/* Meta Info */}
-              <div className="flex items-center gap-4 mb-4 text-sm text-[var(--on-surface-variant)]">
+              {/* Meta */}
+              <div className="flex items-center gap-3 text-sm text-white/80 mb-3 flex-wrap">
+                <div className="flex items-center gap-1 text-yellow-400">
+                  <Star size={16} fill="currentColor" />
+                  {currentMovie.rating || 'N/A'}
+                </div>
                 <span>{currentMovie.release_year}</span>
-                <span className="w-1 h-1 rounded-full bg-[var(--on-surface-variant)]" />
                 <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock size={14} />
                   {currentMovie.duration}
                 </span>
-                <span className="w-1 h-1 rounded-full bg-[var(--on-surface-variant)]" />
-                <span>{currentMovie.genre?.join(', ')}</span>
               </div>
 
-              {/* Description */}
-              <p className="text-[var(--on-surface-variant)] mb-6 line-clamp-3 text-sm sm:text-base max-w-xl">
+              {/* Description (clean mobile clamp) */}
+              <p className="text-sm sm:text-base text-white/80 line-clamp-2 sm:line-clamp-3 mb-5">
                 {currentMovie.description}
               </p>
 
-              {/* Actions */}
-              <div className="flex flex-wrap items-center gap-3">
+              {/* Buttons */}
+              <div className="flex gap-3 flex-wrap">
                 <Link
                   href={`/movie/${currentMovie.id}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-btn font-semibold text-[var(--on-primary)] ambient-glow-hover transition-all hover:scale-105"
+                  className="flex items-center gap-2 px-5 py-3 bg-[var(--primary)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition"
                 >
-                  <Play className="w-5 h-5" fill="currentColor" />
-                  Watch Now
+                  <Play size={16} />
+                  Watch
                 </Link>
+
                 <Link
                   href={`/movie/${currentMovie.id}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--surface-container)]/80 backdrop-blur-sm font-semibold text-white hover:bg-[var(--surface-container-high)] transition-all"
+                  className="flex items-center gap-2 px-5 py-3 bg-white/10 border border-white/20 text-white rounded-lg text-sm hover:bg-white/20 transition"
                 >
-                  <Info className="w-5 h-5" />
-                  More Info
+                  <Info size={16} />
+                  Details
                 </Link>
               </div>
             </motion.div>
@@ -133,66 +137,41 @@ export function HeroCarousel({ movies }) {
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Arrows (better mobile UX) */}
       {slides.length > 1 && (
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-[var(--surface-container)]/80 backdrop-blur-sm hover:bg-[var(--surface-container-high)] transition-colors"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-black/40 rounded-full text-white hover:bg-black/60 transition"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft />
           </button>
+
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-[var(--surface-container)]/80 backdrop-blur-sm hover:bg-[var(--surface-container-high)] transition-colors"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-black/40 rounded-full text-white hover:bg-black/60 transition"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight />
           </button>
         </>
       )}
 
-      {/* Pagination Dots */}
+      {/* Dots (cleaner & mobile friendly) */}
       {slides.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`transition-all duration-300 rounded-full ${
+              className={`h-2 rounded-full transition-all ${
                 index === currentIndex
-                  ? 'w-8 h-2 bg-[var(--primary)]'
-                  : 'w-2 h-2 bg-[var(--on-surface-variant)]/50 hover:bg-[var(--on-surface-variant)]'
+                  ? 'w-6 bg-[var(--primary)]'
+                  : 'w-2 bg-white/40'
               }`}
             />
           ))}
         </div>
       )}
-
-      {/* Side Preview */}
-      <div className="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2 z-20">
-        <div className="flex flex-col gap-3">
-          {slides.slice(currentIndex + 1, currentIndex + 3).concat(
-            slides.slice(0, Math.max(0, 2 - (slides.length - currentIndex - 1)))
-          ).map((movie, index) => (
-            <motion.div
-              key={`${movie.id}-${index}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              onClick={() => setCurrentIndex(slides.indexOf(movie))}
-              className="relative w-32 h-20 rounded-lg overflow-hidden cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
-            >
-              <Image
-                src={movie.poster_url}
-                alt={movie.name}
-                fill
-                className="object-cover"
-                sizes="128px"
-              />
-            </motion.div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
