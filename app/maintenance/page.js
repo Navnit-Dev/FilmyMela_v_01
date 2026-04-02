@@ -14,7 +14,7 @@ export default function MaintenancePage({ searchParams }) {
         {/* Logo */}
         <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-[var(--primary)]/10 flex items-center justify-center">
           <Image
-            src="https://drive.google.com/u/0/drive-viewer/AKGpihap-6l1VQyUWmzW-JcAxdl-YiY-TxL-JxGGD_xE9A1IYHcP4_BcPeHsu8OVqUZpulNl60C0pS4saHAJiE8kw1JbB2qCQMRjlis=s2560?auditContext=forDisplay"
+            src="/logo.jpeg"
             alt="FilmyMela"
             width={80}
             height={80}

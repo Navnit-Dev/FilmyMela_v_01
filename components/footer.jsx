@@ -37,7 +37,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                 <Image
-                  src="https://drive.google.com/u/0/drive-viewer/AKGpihap-6l1VQyUWmzW-JcAxdl-YiY-TxL-JxGGD_xE9A1IYHcP4_BcPeHsu8OVqUZpulNl60C0pS4saHAJiE8kw1JbB2qCQMRjlis=s2560?auditContext=forDisplay"
+                  src="/logo.jpeg"
                   alt="FilmyMela"
                   width={40}
                   height={40}
