@@ -114,7 +114,7 @@ export default function AdminLayout({ children }) {
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/admin/dashboard" className="flex items-center gap-2">
             <Image
-              src="https://filmymela.netlify.app/assets/logo.png"
+              src="https://drive.google.com/u/0/drive-viewer/AKGpihap-6l1VQyUWmzW-JcAxdl-YiY-TxL-JxGGD_xE9A1IYHcP4_BcPeHsu8OVqUZpulNl60C0pS4saHAJiE8kw1JbB2qCQMRjlis=s2560?auditContext=forDisplay"
               alt="FilmyMela"
               width={32}
               height={32}
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }) {
               <Link href="/admin/dashboard" className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--surface-bright)] flex items-center justify-center">
                   <Image
-                    src="https://filmymela.netlify.app/assets/logo.png"
+                    src="https://drive.google.com/u/0/drive-viewer/AKGpihap-6l1VQyUWmzW-JcAxdl-YiY-TxL-JxGGD_xE9A1IYHcP4_BcPeHsu8OVqUZpulNl60C0pS4saHAJiE8kw1JbB2qCQMRjlis=s2560?auditContext=forDisplay"
                     alt="FilmyMela"
                     width={40}
                     height={40}
