@@ -1,5 +1,6 @@
 import './globals.css';
 import { Providers } from '@/components/providers';
+import { AdsProvider } from '@/components/ads/AdsProvider';
 
 export const metadata = {
   title: {
@@ -64,15 +65,43 @@ export const metadata = {
   verification: {
     google: 'OYP0Td0V_8K4JyLfR5RaOj5Mfs0b7GXeyukCWSgmJoc',
   },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({ children }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'FilmyMela',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://filmymela.com',
+    description: 'Discover, stream, and download your favorite movies.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${process.env.NEXT_PUBLIC_APP_URL || 'https://filmymela.com'}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
     <html lang="en" className="dark">
+      <head>
+        <meta name="monetag" content="36e3ca9b3bd39dbb4889f75139c4f534" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="antialiased">
-        <Providers>
-          {children}
-        </Providers>
+        <AdsProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </AdsProvider>
       </body>
     </html>
   );
