@@ -89,7 +89,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="monetag" content="cc0b89e59eb0afa4f8c43ec2b08f5df1">
         
       </head>
       <body className="antialiased">
