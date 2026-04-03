@@ -1,6 +1,5 @@
 import './globals.css';
 import { Providers } from '@/components/providers';
-import { AdsProvider } from '@/components/ads/AdsProvider';
 
 export const metadata = {
   title: {
@@ -97,11 +96,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="antialiased">
-        <AdsProvider>
           <Providers>
             {children}
           </Providers>
-        </AdsProvider>
       </body>
     </html>
   );
