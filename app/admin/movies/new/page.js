@@ -4,6 +4,8 @@ import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Trash2 } from 'lucide-react';
+
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Box,
