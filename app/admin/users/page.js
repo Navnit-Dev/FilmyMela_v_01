@@ -3,22 +3,44 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  ChevronLeft,
-  Users,
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Avatar,
+  Menu,
+  MenuItem,
+  Card,
+  CardContent,
+  Grid,
+  Skeleton,
+  Pagination,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+} from '@mui/material';
+import {
+  ArrowBack,
+  People,
   Search,
-  Filter,
-  MoreVertical,
-  UserX,
-  UserCheck,
-  Mail,
-  Calendar,
-  Shield,
-  Loader2,
-  Ban,
-  Trash2
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+  MoreVert,
+  Block,
+  CheckCircle,
+  Delete,
+  CalendarToday,
+  Security,
+} from '@mui/icons-material';
 
 export default function UserManagementPage() {
   const router = useRouter();
@@ -29,9 +51,8 @@ export default function UserManagementPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showActionsMenu, setShowActionsMenu] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -93,247 +114,200 @@ export default function UserManagementPage() {
 
       if (res.ok) {
         fetchUsers();
-        setShowActionsMenu(null);
+        setAnchorEl(null);
       }
     } catch (error) {
       console.error('User action failed:', error);
     }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      active: 'bg-green-500/20 text-green-500',
-      inactive: 'bg-yellow-500/20 text-yellow-500',
-      banned: 'bg-red-500/20 text-red-500'
-    };
-    return badges[status] || badges.inactive;
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'inactive': return 'warning';
+      case 'banned': return 'error';
+      default: return 'default';
+    }
   };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Skeleton variant="circular" width={40} height={40} />
+      </Box>
     );
   }
 
+  const stats = [
+    { label: 'Total Users', value: totalCount, icon: People },
+    { label: 'Active', value: users.filter(u => u.status === 'active').length, icon: CheckCircle },
+    { label: 'New This Week', value: users.filter(u => {
+      const created = new Date(u.created_at);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      return created > weekAgo;
+    }).length, icon: CalendarToday },
+    { label: 'Banned', value: users.filter(u => u.status === 'banned').length, icon: Block },
+  ];
+
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/dashboard"
-              className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
+      <Paper sx={{ position: 'sticky', top: 0, zIndex: 40, borderRadius: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none' }}>
+              <IconButton>
+                <ArrowBack />
+              </IconButton>
             </Link>
-            <div>
-              <h1 className="font-display font-bold text-xl flex items-center gap-2">
-                <Users className="w-6 h-6" />
-                User Management
-              </h1>
-              <p className="text-sm text-[var(--on-surface-variant)]">
-                {totalCount} total users
-              </p>
-            </div>
-          </div>
+            <Box>
+              <Typography variant="h6" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <People /> User Management
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{totalCount} total users</Typography>
+            </Box>
+          </Box>
 
-          {/* Search & Filter */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-variant)]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search users..."
-                className="pl-10 pr-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-sm w-64"
-              />
-            </div>
-            
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="banned">Banned</option>
-            </select>
-          </div>
-        </div>
-      </header>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 220, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+            />
+            <FormControl size="small" sx={{ width: 120 }}>
+              <InputLabel>Status</InputLabel>
+              <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} label="Status">
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="banned">Banned</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+      </Paper>
 
-      {/* Content */}
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto">
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
           {/* Stats Cards */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            {[
-              { label: 'Total Users', value: totalCount, icon: Users },
-              { label: 'Active', value: users.filter(u => u.status === 'active').length, icon: UserCheck },
-              { label: 'New This Week', value: users.filter(u => {
-                const created = new Date(u.created_at);
-                const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                return created > weekAgo;
-              }).length, icon: Calendar },
-              { label: 'Banned', value: users.filter(u => u.status === 'banned').length, icon: Ban }
-            ].map((stat) => (
-              <div key={stat.label} className="p-4 rounded-xl bg-[var(--surface-container)] ghost-border">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-[var(--primary)]/10">
-                    <stat.icon className="w-5 h-5 text-[var(--primary)]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-xs text-[var(--on-surface-variant)]">{stat.label}</p>
-                  </div>
-                </div>
-              </div>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {stats.map((stat) => (
+              <Grid item xs={12} sm={6} md={3} key={stat.label}>
+                <Card>
+                  <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: 'primary.main' }}>
+                      <stat.icon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" fontWeight={700}>{stat.value}</Typography>
+                      <Typography variant="body2" color="text.secondary">{stat.label}</Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
             ))}
-          </div>
+          </Grid>
 
           {/* Users Table */}
-          <div className="rounded-2xl bg-[var(--surface-container)] ghost-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[var(--outline-variant)]/20">
-                    <th className="text-left p-4 text-sm font-medium text-[var(--on-surface-variant)]">User</th>
-                    <th className="text-left p-4 text-sm font-medium text-[var(--on-surface-variant)]">Email</th>
-                    <th className="text-left p-4 text-sm font-medium text-[var(--on-surface-variant)]">Status</th>
-                    <th className="text-left p-4 text-sm font-medium text-[var(--on-surface-variant)]">Joined</th>
-                    <th className="text-left p-4 text-sm font-medium text-[var(--on-surface-variant)]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                      </td>
-                    </tr>
-                  ) : users.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-[var(--on-surface-variant)]">
-                        No users found
-                      </td>
-                    </tr>
-                  ) : (
-                    users.map((user) => (
-                      <tr key={user.id} className="border-b border-[var(--outline-variant)]/10 hover:bg-[var(--surface-container-high)]">
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
-                              <span className="font-semibold text-[var(--primary)]">
-                                {user.name?.[0]?.toUpperCase() || 'U'}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-medium">{user.name || 'Unknown'}</p>
-                              {user.is_verified && (
-                                <span className="text-xs text-[var(--success)]">Verified</span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4 text-sm">{user.email}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadge(user.status)}`}>
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm text-[var(--on-surface-variant)]">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="p-4">
-                          <div className="relative">
-                            <button
-                              onClick={() => setShowActionsMenu(showActionsMenu === user.id ? null : user.id)}
-                              className="p-2 rounded-lg hover:bg-[var(--surface-container-high)]"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-                            
-                            <AnimatePresence>
-                              {showActionsMenu === user.id && (
-                                <motion.div
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.95 }}
-                                  className="absolute right-0 mt-2 w-48 rounded-xl bg-[var(--surface)] border shadow-lg z-50"
-                                >
-                                  {user.status !== 'banned' ? (
-                                    <button
-                                      onClick={() => handleUserAction(user.id, 'ban')}
-                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[var(--surface-container)]"
-                                    >
-                                      <Ban className="w-4 h-4" />
-                                      Ban User
-                                    </button>
-                                  ) : (
-                                    <button
-                                      onClick={() => handleUserAction(user.id, 'unban')}
-                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-500 hover:bg-[var(--surface-container)]"
-                                    >
-                                      <UserCheck className="w-4 h-4" />
-                                      Unban User
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => handleUserAction(user.id, 'delete')}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-[var(--surface-container)]"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete User
-                                  </button>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>User</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Joined</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Skeleton variant="rectangular" height={100} />
+                    </TableCell>
+                  </TableRow>
+                ) : users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body1" color="text.secondary">No users found</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            {user.name?.[0]?.toUpperCase() || 'U'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={600}>{user.name || 'Unknown'}</Typography>
+                            {user.is_verified && (
+                              <Chip label="Verified" size="small" color="success" sx={{ height: 20 }} />
+                            )}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Chip label={user.status} color={getStatusColor(user.status)} size="small" />
+                      </TableCell>
+                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+                          <MoreVert />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl)}
+                          onClose={() => setAnchorEl(null)}
+                        >
+                          {user.status !== 'banned' ? (
+                            <MenuItem onClick={() => handleUserAction(user.id, 'ban')} sx={{ color: 'error.main' }}>
+                              <Block fontSize="small" sx={{ mr: 1 }} /> Ban User
+                            </MenuItem>
+                          ) : (
+                            <MenuItem onClick={() => handleUserAction(user.id, 'unban')} sx={{ color: 'success.main' }}>
+                              <CheckCircle fontSize="small" sx={{ mr: 1 }} /> Unban User
+                            </MenuItem>
+                          )}
+                          <MenuItem onClick={() => handleUserAction(user.id, 'delete')} sx={{ color: 'error.main' }}>
+                            <Delete fontSize="small" sx={{ mr: 1 }} /> Delete User
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-[var(--outline-variant)]/20">
-                <p className="text-sm text-[var(--on-surface-variant)]">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded-lg bg-[var(--surface-container)] disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 rounded-lg bg-[var(--surface-container)] disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, borderTop: 1, borderColor: 'divider' }}>
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={(e, page) => setCurrentPage(page)}
+                  color="primary"
+                  shape="rounded"
+                />
+              </Box>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </TableContainer>
+        </Box>
+      </Box>
+    </Box>
   );
 }

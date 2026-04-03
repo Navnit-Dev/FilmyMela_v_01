@@ -2,7 +2,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { MovieSection } from '@/components/movie-section';
-import { getMovies } from '@/lib/movies';
+import { getMovies, getHomeSectionsWithMovies } from '@/lib/movies';
 
 export default async function HomePage() {
   // Fetch all movie data in parallel
@@ -10,14 +10,12 @@ export default async function HomePage() {
     { movies: featuredMovies },
     { movies: trendingMovies },
     { movies: latestMovies },
-    { movies: hollywoodMovies },
-    { movies: bollywoodMovies }
+    dynamicSections
   ] = await Promise.all([
     getMovies({ featured: true, limit: 8 }),
     getMovies({ trending: true, limit: 12 }),
     getMovies({ limit: 12 }),
-    getMovies({ industry: 'Hollywood', limit: 6 }),
-    getMovies({ industry: 'Bollywood', limit: 6 })
+    getHomeSectionsWithMovies()
   ]);
 
   // Hero slides from featured movies
@@ -44,17 +42,21 @@ export default async function HomePage() {
           viewAllHref="/movies?sort=latest"
         />
         
-        <MovieSection 
-          title="Hollywood" 
-          movies={hollywoodMovies} 
-          viewAllHref="/movies?industry=Hollywood"
-        />
-        
-        <MovieSection 
-          title="Bollywood" 
-          movies={bollywoodMovies} 
-          viewAllHref="/movies?industry=Bollywood"
-        />
+        {/* Dynamic Sections */}
+        {dynamicSections.map((section) => (
+          section.movies.length > 0 && (
+            <MovieSection
+              key={section.id}
+              title={section.name}
+              movies={section.movies}
+              viewAllHref={
+                section.section_type === 'industry'
+                  ? `/movies?industry=${encodeURIComponent(section.filter_value)}`
+                  : `/movies?genre=${encodeURIComponent(section.filter_value)}`
+              }
+            />
+          )
+        ))}
       </div>
 
       <Footer />

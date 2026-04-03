@@ -2,18 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  ChevronLeft, 
-  Plus, 
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  Skeleton,
+  InputAdornment,
+  FormControlLabel,
+  Checkbox,
+  Paper,
+} from '@mui/material';
+import {
+  ArrowBack,
+  Add,
+  Edit,
+  Delete,
   Search,
-  Edit2,
-  Trash2,
-  AlertCircle,
-  Check,
-  Globe,
-  Building2
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+  Business,
+  Public,
+} from '@mui/icons-material';
 
 export default function IndustryManagementPage() {
   const [industries, setIndustries] = useState([]);
@@ -142,267 +162,199 @@ export default function IndustryManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Skeleton variant="rectangular" height={60} sx={{ mb: 3, borderRadius: 3 }} />
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={i}>
+              <Skeleton variant="rectangular" height={150} sx={{ borderRadius: 3 }} />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/dashboard"
-              className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
+      <Paper sx={{ position: 'sticky', top: 0, zIndex: 40, borderRadius: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none' }}>
+              <IconButton>
+                <ArrowBack />
+              </IconButton>
             </Link>
-            <div>
-              <h1 className="font-display font-bold text-xl">Industry Management</h1>
-              <p className="text-sm text-[var(--on-surface-variant)]">{industries.length} industries</p>
-            </div>
-          </div>
-          
-          <button
-            onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-btn font-medium text-[var(--on-primary)]"
-          >
-            <Plus className="w-4 h-4" />
+            <Box>
+              <Typography variant="h6" fontWeight={700}>Industry Management</Typography>
+              <Typography variant="caption" color="text.secondary">{industries.length} industries</Typography>
+            </Box>
+          </Box>
+          <Button variant="contained" startIcon={<Add />} onClick={openCreateModal} sx={{ borderRadius: 3 }}>
             Add Industry
-          </button>
-        </div>
-      </header>
+          </Button>
+        </Box>
+      </Paper>
 
-      {/* Search */}
-      <div className="px-6 py-4">
-        <div className="max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search industries..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-            />
-          </div>
-        </div>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
+          {/* Search */}
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search industries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ maxWidth: 500, mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
 
-      {/* Industries Grid */}
-      <div className="px-6 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredIndustries.map((industry) => (
-            <div
-              key={industry.id}
-              className="p-4 rounded-xl bg-[var(--surface-container)] ghost-border group"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/20 flex items-center justify-center">
-                    {industry.icon ? (
-                      <span className="text-lg">{industry.icon}</span>
-                    ) : (
-                      <Building2 className="w-5 h-5 text-[var(--primary)]" />
+          {/* Industries Grid */}
+          <Grid container spacing={3}>
+            {filteredIndustries.map((industry) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={industry.id}>
+                <Card sx={{ position: 'relative', '&:hover .actions': { opacity: 1 } }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          <Business sx={{ color: 'white' }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight={600}>{industry.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{industry.slug}</Typography>
+                        </Box>
+                      </Box>
+                      <Box className="actions" sx={{ opacity: { xs: 1, md: 0 }, transition: 'opacity 0.2s' }}>
+                        <IconButton size="small" onClick={() => openEditModal(industry)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => handleDelete(industry.id)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                    {industry.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineClamp: 2 }}>
+                        {industry.description}
+                      </Typography>
                     )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{industry.name}</h3>
-                    <p className="text-xs text-[var(--on-surface-variant)]">{industry.slug}</p>
-                  </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditModal(industry)}
-                    className="p-1.5 rounded-lg hover:bg-[var(--surface-bright)] text-[var(--on-surface-variant)]"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(industry.id)}
-                    className="p-1.5 rounded-lg hover:bg-[var(--error)]/10 text-[var(--error)]"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              
-              {industry.description && (
-                <p className="text-sm text-[var(--on-surface-variant)] mb-2 line-clamp-2">
-                  {industry.description}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1 text-[var(--on-surface-variant)]">
-                  <Globe className="w-3 h-3" />
-                  <span>{industry.country || 'International'}</span>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full ${industry.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                  {industry.is_active ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {filteredIndustries.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--surface-container)] flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-[var(--on-surface-variant)]" />
-            </div>
-            <h3 className="font-semibold mb-1">No industries found</h3>
-            <p className="text-sm text-[var(--on-surface-variant)]">Create your first industry to get started</p>
-          </div>
-        )}
-      </div>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                        <Public fontSize="small" />
+                        <Typography variant="caption">{industry.country || 'International'}</Typography>
+                      </Box>
+                      <Chip 
+                        label={industry.is_active ? 'Active' : 'Inactive'} 
+                        size="small" 
+                        color={industry.is_active ? 'success' : 'error'}
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {filteredIndustries.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Avatar sx={{ width: 64, height: 64, mx: 'auto', mb: 2, bgcolor: 'action.hover' }}>
+                <Business sx={{ fontSize: 32, color: 'text.secondary' }} />
+              </Avatar>
+              <Typography variant="h6" gutterBottom>No industries found</Typography>
+              <Typography variant="body2" color="text.secondary">Create your first industry to get started</Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
 
       {/* Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-            onClick={() => setShowModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg p-6 rounded-2xl bg-[var(--surface)] shadow-2xl"
-            >
-              <h2 className="font-display font-bold text-xl mb-6">
-                {editingIndustry ? 'Edit Industry' : 'Add New Industry'}
-              </h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-                    required
-                  />
-                </div>
+      <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingIndustry ? 'Edit Industry' : 'Add New Industry'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Name *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Slug (auto-generated if empty)"
+              value={formData.slug}
+              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              fullWidth
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="Country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="e.g., USA, India"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Sort Order"
+                type="number"
+                value={formData.sort_order}
+                onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+            <TextField
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              multiline
+              rows={3}
+              fullWidth
+            />
+            <TextField
+              label="Icon (emoji)"
+              value={formData.icon}
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+              placeholder="🎬"
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                />
+              }
+              label="Active"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowModal(false)} variant="outlined" sx={{ borderRadius: 3 }}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" sx={{ borderRadius: 3 }}>
+            {editingIndustry ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-                <div>
-                  <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                    Slug (auto-generated if empty)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-                      placeholder="e.g., USA, India"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                      Sort Order
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.sort_order}
-                      onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)] resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                    Icon (emoji)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
-                    placeholder="🎬"
-                  />
-                </div>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-container)] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-5 h-5 rounded border-[var(--outline-variant)] bg-[var(--surface-bright)] text-[var(--primary)]"
-                  />
-                  <span className="font-medium">Active</span>
-                </label>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 rounded-lg bg-[var(--surface-container)] text-[var(--on-surface)] font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 rounded-lg gradient-btn text-[var(--on-primary)] font-medium"
-                  >
-                    {editingIndustry ? 'Update' : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Notification */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg toast-${notification.type}`}
-          >
-            <p className="font-medium">{notification.message}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={3000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

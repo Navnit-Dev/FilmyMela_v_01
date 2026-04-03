@@ -4,28 +4,56 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  EyeOff,
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  Pagination,
+  InputAdornment,
+  Tooltip,
+  Skeleton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
+import {
+  Search,
+  Add,
+  Edit,
+  Delete,
+  Visibility,
+  VisibilityOff,
   TrendingUp,
   Star,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  MoreVertical,
-  AlertCircle
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+  ArrowBack,
+  OpenInNew,
+} from '@mui/icons-material';
 
 export default function AdminMoviesPage() {
   const router = useRouter();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [filterVisibility, setFilterVisibility] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -108,7 +136,7 @@ export default function AdminMoviesPage() {
 
       if (res.ok) {
         setMovies(movies.map(m => 
-          m.id === movie.id ? { ...m, featured: !m.featured } : m
+          m.id === movie.id ? { ...m, featured: !movie.featured } : m
         ));
         showNotification(`Movie ${movie.featured ? 'unfeatured' : 'featured'}`, 'success');
       }
@@ -127,7 +155,7 @@ export default function AdminMoviesPage() {
 
       if (res.ok) {
         setMovies(movies.map(m => 
-          m.id === movie.id ? { ...m, trending: !m.trending } : m
+          m.id === movie.id ? { ...m, trending: !movie.trending } : m
         ));
         showNotification(`Movie ${movie.trending ? 'removed from' : 'added to'} trending`, 'success');
       }
@@ -141,281 +169,245 @@ export default function AdminMoviesPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Filter movies based on search, type and visibility                                                                                
+  const filteredMovies = movies.filter(movie => {
+    const matchesSearch = !searchQuery || 
+      movie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      movie.genre?.some(g => g.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesType = filterType === 'all' || movie.content_type === filterType;
+    const matchesVisibility = filterVisibility === 'all' || 
+      (filterVisibility === 'visible' && movie.visible) ||
+      (filterVisibility === 'hidden' && !movie.visible);
+    return matchesSearch && matchesType && matchesVisibility;
+  });
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Skeleton variant="rectangular" height={60} sx={{ mb: 3, borderRadius: 3 }} />
+        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 3 }} />
+      </Box>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/dashboard"
-              className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
+      <Paper sx={{ position: 'sticky', top: 0, zIndex: 40, borderRadius: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none' }}>
+              <IconButton>
+                <ArrowBack />
+              </IconButton>
             </Link>
-            <h1 className="font-display font-bold text-xl">Movie Management</h1>
-          </div>
-          
-          <Link
-            href="/admin/movies/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-btn font-medium text-[var(--on-primary)]"
-          >
-            <Plus className="w-4 h-4" />
-            Add Movie
+            <Typography variant="h6" fontWeight={700}>Movie Management</Typography>
+          </Box>
+          <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }}>
+            <Button variant="contained" startIcon={<Add />} sx={{ borderRadius: 3 }}>
+              Add Movie
+            </Button>
           </Link>
-        </div>
-      </header>
+        </Box>
+      </Paper>
 
       {/* Content */}
-      <div className="p-6">
-        {/* Search Bar */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search movies..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] placeholder-[var(--on-surface-variant)]/50 focus:outline-none focus:border-[var(--primary)]"
-            />
-          </div>
-        </div>
+      <Box sx={{ p: 3 }}>
+        {/* Filters */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <TextField
+            variant="outlined"
+            placeholder="Search movies..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ maxWidth: 300, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Content Type</InputLabel>
+            <Select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              label="Content Type"
+              sx={{ borderRadius: 3 }}
+            >
+              <MenuItem value="all">All Types</MenuItem>
+              <MenuItem value="movie">Movies</MenuItem>
+              <MenuItem value="anime">Anime</MenuItem>
+              <MenuItem value="web_series">Web Series</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Visibility</InputLabel>
+            <Select
+              value={filterVisibility}
+              onChange={(e) => setFilterVisibility(e.target.value)}
+              label="Visibility"
+              sx={{ borderRadius: 3 }}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="visible">Visible</MenuItem>
+              <MenuItem value="hidden">Hidden</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
 
         {/* Movies Table */}
-        <div className="rounded-2xl bg-[var(--surface-container)] ghost-border overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="w-8 h-8 mx-auto border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-[var(--surface-container-low)]">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)]">
-                        Movie
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)]">
-                        Industry
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)]">
-                        Year
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)]">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-variant)]">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                    {movies.map((movie) => (
-                      <tr key={movie.id} className="hover:bg-[var(--surface-container-high)]/50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-[var(--surface-bright)]">
-                              {movie.poster_url ? (
-                                <Image
-                                  src={movie.poster_url}
-                                  alt={movie.name}
-                                  fill
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <span className="text-xs text-[var(--on-surface-variant)]">No img</span>
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium">{movie.name}</p>
-                              <p className="text-xs text-[var(--on-surface-variant)]">
-                                {movie.genre?.join(', ')}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 text-xs rounded-full bg-[var(--surface-bright)]">
-                            {movie.industry}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          {movie.release_year}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => toggleVisibility(movie)}
-                              className={`p-1.5 rounded ${movie.visible ? 'text-[var(--success)]' : 'text-[var(--on-surface-variant)]'}`}
-                              title={movie.visible ? 'Visible' : 'Hidden'}
-                            >
-                              {movie.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            </button>
-                            <button
-                              onClick={() => toggleFeatured(movie)}
-                              className={`p-1.5 rounded ${movie.featured ? 'text-yellow-400' : 'text-[var(--on-surface-variant)]'}`}
-                              title={movie.featured ? 'Featured' : 'Not Featured'}
-                            >
-                              <Star className="w-4 h-4" fill={movie.featured ? 'currentColor' : 'none'} />
-                            </button>
-                            <button
-                              onClick={() => toggleTrending(movie)}
-                              className={`p-1.5 rounded ${movie.trending ? 'text-[var(--primary)]' : 'text-[var(--on-surface-variant)]'}`}
-                              title={movie.trending ? 'Trending' : 'Not Trending'}
-                            >
-                              <TrendingUp className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <Link
-                              href={`/movie/${movie.id}`}
-                              target="_blank"
-                              className="p-1.5 rounded hover:bg-[var(--surface-bright)] transition-colors"
-                              title="View"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Link>
-                            <Link
-                              href={`/admin/movies/${movie.id}/edit`}
-                              className="p-1.5 rounded hover:bg-[var(--surface-bright)] transition-colors"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Link>
-                            <button
-                              onClick={() => {
-                                setMovieToDelete(movie);
-                                setDeleteModalOpen(true);
-                              }}
-                              className="p-1.5 rounded hover:bg-[var(--error)]/10 text-[var(--error)] transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--outline-variant)]/20">
-                  <p className="text-sm text-[var(--on-surface-variant)]">
-                    Page {currentPage} of {totalPages}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="p-2 rounded-lg hover:bg-[var(--surface-container-high)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg hover:bg-[var(--surface-container-high)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
+        <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Movie</TableCell>
+                <TableCell>Industry</TableCell>
+                <TableCell>Year</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredMovies.map((movie) => (
+                <TableRow key={movie.id} hover>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar variant="rounded" sx={{ width: 48, height: 64, bgcolor: 'background.paper' }}>
+                        {movie.poster_url ? (
+                          <Image src={movie.poster_url} alt={movie.name} fill style={{ objectFit: 'cover' }} />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">No img</Typography>
+                        )}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600}>{movie.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">{movie.genre?.join(', ')}</Typography>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={movie.industry} size="small" sx={{ borderRadius: 2 }} />
+                  </TableCell>
+                  <TableCell>{movie.release_year}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title={movie.visible ? 'Visible' : 'Hidden'}>
+                        <IconButton size="small" onClick={() => toggleVisibility(movie)} color={movie.visible ? 'success' : 'default'}>
+                          {movie.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={movie.featured ? 'Featured' : 'Not Featured'}>
+                        <IconButton size="small" onClick={() => toggleFeatured(movie)} color={movie.featured ? 'warning' : 'default'}>
+                          <Star fontSize="small" sx={{ color: movie.featured ? '#f59e0b' : undefined }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={movie.trending ? 'Trending' : 'Not Trending'}>
+                        <IconButton size="small" onClick={() => toggleTrending(movie)} color={movie.trending ? 'primary' : 'default'}>
+                          <TrendingUp fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Link href={`/movie/${movie.id}`} target="_blank" passHref style={{ textDecoration: 'none' }}>
+                        <Tooltip title="View">
+                          <IconButton size="small">
+                            <OpenInNew fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Link>
+                      <Link href={`/admin/movies/${movie.id}/edit`} passHref style={{ textDecoration: 'none' }}>
+                        <Tooltip title="Edit">
+                          <IconButton size="small">
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Link>
+                      <Tooltip title="Delete">
+                        <IconButton size="small" color="error" onClick={() => { setMovieToDelete(movie); setDeleteModalOpen(true); }}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredMovies.length === 0 && !loading && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                    <Avatar sx={{ width: 64, height: 64, mx: 'auto', mb: 2, bgcolor: 'action.hover' }}>
+                      <Search sx={{ fontSize: 32, color: 'text.secondary' }} />
+                    </Avatar>
+                    <Typography variant="h6" gutterBottom>No movies found</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      {searchQuery ? 'Try a different search term' : 'Add your first movie to get started'}
+                    </Typography>
+                    <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }}>
+                      <Button variant="contained" startIcon={<Add />}>
+                        Add Movie
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
               )}
-            </>
-          )}
+            </TableBody>
+          </Table>
 
-          {!loading && movies.length === 0 && (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--surface-bright)] flex items-center justify-center">
-                <Search className="w-8 h-8 text-[var(--on-surface-variant)]" />
-              </div>
-              <h3 className="font-display font-semibold text-lg mb-2">No movies found</h3>
-              <p className="text-[var(--on-surface-variant)] mb-4">
-                {searchQuery ? 'Try a different search term' : 'Add your first movie to get started'}
-              </p>
-              <Link
-                href="/admin/movies/new"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-btn font-medium text-[var(--on-primary)]"
-              >
-                <Plus className="w-4 h-4" />
-                Add Movie
-              </Link>
-            </div>
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Pagination 
+                count={totalPages} 
+                page={currentPage} 
+                onChange={(e, page) => setCurrentPage(page)}
+                color="primary"
+                shape="rounded"
+              />
+            </Box>
           )}
-        </div>
-      </div>
+        </TableContainer>
+      </Box>
 
-      {/* Delete Modal */}
-      <AnimatePresence>
-        {deleteModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md p-6 rounded-2xl bg-[var(--surface-container)] ghost-border"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-full bg-[var(--error)]/10">
-                  <AlertCircle className="w-6 h-6 text-[var(--error)]" />
-                </div>
-                <h3 className="font-display font-semibold text-lg">Delete Movie</h3>
-              </div>
-              <p className="text-[var(--on-surface-variant)] mb-6">
-                Are you sure you want to delete &quot;{movieToDelete?.name}&quot;? This action cannot be undone.
-              </p>
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setDeleteModalOpen(false);
-                    setMovieToDelete(null);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-[var(--surface-bright)] hover:bg-[var(--surface-container-high)] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 rounded-lg bg-[var(--error)] text-white hover:bg-[var(--error)]/90 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Delete Dialog */}
+      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'error.main' }}>
+            <Delete sx={{ color: 'white' }} />
+          </Avatar>
+          Delete Movie
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete &quot;{movieToDelete?.name}&quot;? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteModalOpen(false)} variant="outlined" sx={{ borderRadius: 3 }}>
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} variant="contained" color="error" sx={{ borderRadius: 3 }}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Notification */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg toast-${notification.type}`}
-          >
-            <p className="font-medium">{notification.message}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <Snackbar 
+        open={!!notification} 
+        autoHideDuration={3000} 
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

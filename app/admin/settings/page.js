@@ -3,17 +3,36 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  ChevronLeft,
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Card,
+  CardContent,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Skeleton,
+  InputAdornment,
+  Paper,
+  Snackbar,
+  Alert,
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  ArrowBack,
   Save,
-  MessageSquare,
-  Power,
-  Bot,
+  PowerSettingsNew,
+  Telegram,
   Send,
-  AlertCircle,
-  Check
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+  Info,
+} from '@mui/icons-material';
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -102,188 +121,158 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Skeleton variant="circular" width={40} height={40} />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/dashboard"
-              className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
+      <Paper sx={{ position: 'sticky', top: 0, zIndex: 40, borderRadius: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none' }}>
+              <IconButton>
+                <ArrowBack />
+              </IconButton>
             </Link>
-            <h1 className="font-display font-bold text-xl">Settings</h1>
-          </div>
-          
-          <button
+            <Typography variant="h6" fontWeight={700}>Settings</Typography>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Save />}
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-btn font-medium text-[var(--on-primary)] disabled:opacity-50"
+            sx={{ borderRadius: 3 }}
           >
-            <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </header>
+          </Button>
+        </Box>
+      </Paper>
 
-      {/* Content */}
-      <div className="p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ maxWidth: 800, mx: 'auto' }}>
           {/* Maintenance Mode */}
-          <div className="p-6 rounded-2xl bg-[var(--surface-container)] ghost-border">
-            <div className="flex items-center gap-3 mb-6">
-              <div className={`p-2 rounded-lg ${settings.maintenance_mode ? 'bg-[var(--error)]/10' : 'bg-[var(--success)]/10'}`}>
-                <Power className={`w-5 h-5 ${settings.maintenance_mode ? 'text-[var(--error)]' : 'text-[var(--success)]'}`} />
-              </div>
-              <div>
-                <h2 className="font-display font-semibold text-lg">Maintenance Mode</h2>
-                <p className="text-sm text-[var(--on-surface-variant)]">
-                  Temporarily disable the site for maintenance
-                </p>
-              </div>
-              <label className="ml-auto relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Avatar sx={{ bgcolor: settings.maintenance_mode ? 'error.main' : 'success.main' }}>
+                  <PowerSettingsNew sx={{ color: 'white' }} />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" fontWeight={600}>Maintenance Mode</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Temporarily disable the site for maintenance
+                  </Typography>
+                </Box>
+                <Switch
                   checked={settings.maintenance_mode}
                   onChange={(e) => setSettings({ ...settings, maintenance_mode: e.target.checked })}
-                  className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-[var(--surface-bright)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]" />
-              </label>
-            </div>
-
-            {settings.maintenance_mode && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                  Maintenance Message
-                </label>
-                <textarea
+              </Box>
+              {settings.maintenance_mode && (
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Maintenance Message"
                   value={settings.maintenance_message}
                   onChange={(e) => setSettings({ ...settings, maintenance_message: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)] resize-none"
                   placeholder="Enter the message to display during maintenance..."
                 />
-              </div>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Telegram Bot Integration */}
-          <div className="p-6 rounded-2xl bg-[var(--surface-container)] ghost-border">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-[var(--tertiary)]/10">
-                <Bot className="w-5 h-5 text-[var(--tertiary)]" />
-              </div>
-              <div>
-                <h2 className="font-display font-semibold text-lg">Telegram Bot</h2>
-                <p className="text-sm text-[var(--on-surface-variant)]">
-                  Configure automatic notifications to Telegram
-                </p>
-              </div>
-              <label className="ml-auto relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
+          {/* Telegram Bot */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                  <Telegram sx={{ color: 'white' }} />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" fontWeight={600}>Telegram Bot</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Configure automatic notifications to Telegram
+                  </Typography>
+                </Box>
+                <Switch
                   checked={settings.telegram_enabled}
                   onChange={(e) => setSettings({ ...settings, telegram_enabled: e.target.checked })}
-                  className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-[var(--surface-bright)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]" />
-              </label>
-            </div>
+              </Box>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                  Bot Token
-                </label>
-                <input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  fullWidth
                   type="password"
+                  label="Bot Token"
                   value={settings.telegram_bot_token}
                   onChange={(e) => setSettings({ ...settings, telegram_bot_token: e.target.value })}
                   placeholder="123456789:ABCdefGHIjklMNOpqrSTUvwxyz"
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
+                  helperText="Get this from @BotFather on Telegram"
                 />
-                <p className="text-xs text-[var(--on-surface-variant)] mt-1">
-                  Get this from @BotFather on Telegram
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                  Chat ID
-                </label>
-                <input
-                  type="text"
+                <TextField
+                  fullWidth
+                  label="Chat ID"
                   value={settings.telegram_chat_id}
                   onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
                   placeholder="-1001234567890 or @channelusername"
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
+                  helperText="Channel or group ID where notifications will be sent"
                 />
-                <p className="text-xs text-[var(--on-surface-variant)] mt-1">
-                  Channel or group ID where notifications will be sent
-                </p>
-              </div>
-
-              {/* Test Telegram */}
-              {settings.telegram_enabled && settings.telegram_bot_token && settings.telegram_chat_id && (
-                <div className="p-4 rounded-xl bg-[var(--surface-container-low)]">
-                  <label className="block text-sm font-medium text-[var(--on-surface-variant)] mb-2">
-                    Send Test Message
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
+                {settings.telegram_enabled && settings.telegram_bot_token && settings.telegram_chat_id && (
+                  <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Send Test Message"
                       value={testMessage}
                       onChange={(e) => setTestMessage(e.target.value)}
                       placeholder="Enter test message..."
-                      className="flex-1 px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--outline-variant)]/30 text-[var(--on-surface)] focus:outline-none focus:border-[var(--primary)]"
+                      InputProps={{
+                        endAdornment: (
+                          <Button variant="contained" size="small" onClick={testTelegram} startIcon={<Send />}>
+                            Test
+                          </Button>
+                        ),
+                      }}
                     />
-                    <button
-                      onClick={testTelegram}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--tertiary)]/20 text-[var(--tertiary)] hover:bg-[var(--tertiary)]/30 transition-colors"
-                    >
-                      <Send className="w-4 h-4" />
-                      Test
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                  </Box>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
 
           {/* About */}
-          <div className="p-6 rounded-2xl bg-[var(--surface-container)] ghost-border">
-            <h2 className="font-display font-semibold text-lg mb-4">About FilmyMela</h2>
-            <div className="space-y-2 text-sm text-[var(--on-surface-variant)]">
-              <p>Version: 1.0.0</p>
-              <p>Platform: Next.js + Supabase</p>
-              <p>Theme: Dark Cinema</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                <Info sx={{ verticalAlign: 'middle', mr: 1 }} />
+                About FilmyMela
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, color: 'text.secondary' }}>
+                <Typography variant="body2">Version: 1.0.0</Typography>
+                <Typography variant="body2">Platform: Next.js + Supabase</Typography>
+                <Typography variant="body2">Theme: Material UI Dark</Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
 
-      {/* Notification */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg toast-${notification.type}`}
-          >
-            <p className="font-medium">{notification.message}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={3000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

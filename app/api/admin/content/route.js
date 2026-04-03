@@ -45,6 +45,7 @@ export async function GET(request) {
     const type = searchParams.get('type') || 'movie';
     const tmdbId = searchParams.get('tmdbId') ? parseInt(searchParams.get('tmdbId')) : null;
     const imdbId = searchParams.get('imdbId') || null;
+    const apiSource = searchParams.get('apiSource') || 'tmdb'; // 'tmdb' or 'omdb' for movies
 
     // Validate content type
     if (!Object.values(ContentTypes).includes(type)) {
@@ -65,7 +66,7 @@ export async function GET(request) {
             { status: 400 }
           );
         }
-        result = await searchContent(query, type);
+        result = await searchContent(query, type, { apiSource });
         break;
 
       case 'details':
@@ -80,7 +81,8 @@ export async function GET(request) {
           query, 
           type, 
           apiId: tmdbId, 
-          imdbId 
+          imdbId,
+          apiSource
         });
         break;
 
@@ -93,7 +95,7 @@ export async function GET(request) {
             { status: 400 }
           );
         }
-        result = await quickSearch(query, type, 5);
+                result = await quickSearch(query, type, 5, { apiSource });
         break;
     }
 

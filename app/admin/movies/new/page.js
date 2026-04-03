@@ -3,25 +3,57 @@
 import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  ChevronLeft, 
-  Save, 
-  Plus, 
-  X, 
-  Search,
-  Film,
-  Tv,
-  Sparkles,
-  Package,
-  Check,
-  Loader2,
-  Trash2,
-  Database,
-  ExternalLink,
-  Star,
-  Shield
-} from 'lucide-react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
+  Avatar,
+  Stepper,
+  Step,
+  StepLabel,
+  Alert,
+  CircularProgress,
+  Skeleton,
+  InputAdornment,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  Divider,
+  Tooltip,
+  Autocomplete,
+} from '@mui/material';
+import {
+  ArrowBack,
+  Save,
+  Add,
+  Close,
+  Search,
+  Movie as MovieIcon,
+  ChevronLeft,
+  Tv,
+  X,
+  AutoFixHigh,
+  Inventory,
+  Check,
+  Delete,
+  Storage,
+  OpenInNew,
+  Star,
+  
+  Security,
+} from '@mui/icons-material';
 
 export default function MovieFormPage({ params }) {
   const router = useRouter();
@@ -45,6 +77,7 @@ export default function MovieFormPage({ params }) {
   const [showApiDropdown, setShowApiDropdown] = useState(false);
   const [selectedApiData, setSelectedApiData] = useState(null);
   const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
+  const [apiSource, setApiSource] = useState('tmdb'); // 'tmdb' or 'omdb' for movies
   
   // Form data with new fields
   const [formData, setFormData] = useState({
@@ -183,7 +216,9 @@ export default function MovieFormPage({ params }) {
     const timer = setTimeout(async () => {
       setApiLoading(true);
       try {
-        const res = await fetch(`/api/admin/content?action=quick&q=${encodeURIComponent(query)}&type=${formData.content_type}`);
+        // For movies, use the selected API source (TMDB or OMDB)
+        const apiParam = formData.content_type === 'movie' ? `&apiSource=${apiSource}` : '';
+        const res = await fetch(`/api/admin/content?action=quick&q=${encodeURIComponent(query)}&type=${formData.content_type}${apiParam}`);
         if (res.ok) {
           const data = await res.json();
           setApiResults(data || []);
@@ -210,7 +245,9 @@ export default function MovieFormPage({ params }) {
   const loadContentDetails = async (result) => {
     setApiLoading(true);
     try {
-      const res = await fetch(`/api/admin/content?action=details&q=${encodeURIComponent(result.title)}&type=${formData.content_type}&apiId=${result.sourceId || ''}`);
+      // For movies, include the selected API source
+      const apiParam = formData.content_type === 'movie' ? `&apiSource=${apiSource}` : '';
+      const res = await fetch(`/api/admin/content?action=details&q=${encodeURIComponent(result.title)}&type=${formData.content_type}&apiId=${result.sourceId || ''}${apiParam}`);
       if (res.ok) {
         const data = await res.json();
         setSelectedApiData(data);
@@ -263,7 +300,7 @@ export default function MovieFormPage({ params }) {
           rating: data.rating || prev.rating || '',
           release_year: data.releaseYear || prev.release_year,
           original_language: data.originalLanguage || prev.original_language || '',
-          duration: data.duration || prev.duration || '',
+          duration: data.runtimeMinutes || prev.duration || '',
           episode_duration: data.episodeDuration || prev.episode_duration || '',
           total_episodes: data.totalEpisodes || prev.total_episodes,
           seasons: data.seasons || prev.seasons,
@@ -301,17 +338,27 @@ export default function MovieFormPage({ params }) {
     }
   };
 
-  // Source badge component - shows correct API based on content type
+  // Handle API source change for movies
+  const handleApiSourceChange = (newSource) => {
+    setApiSource(newSource);
+    setApiQuery('');
+    setApiResults([]);
+    setShowApiDropdown(false);
+    setSelectedApiData(null);
+  };
+
+  // Source badge component - shows correct API based on content type and user selection
   const SourceBadge = ({ source }) => {
     const badges = {
-      tmdb: { color: 'bg-blue-500', label: 'TMDB', icon: Database },
-      jikan: { color: 'bg-purple-500', label: 'Jikan', icon: Sparkles },
+      tmdb: { color: 'bg-blue-500', label: 'TMDB', icon: Storage },
+      omdb: { color: 'bg-orange-500', label: 'OMDB', icon: Storage },
+      jikan: { color: 'bg-purple-500', label: 'Jikan', icon: AutoFixHigh },
       tvmaze: { color: 'bg-green-500', label: 'TVMaze', icon: Tv }
     };
     
-    // Auto-detect source from content type if not provided
+    // Auto-detect source from content type if not provided, or use selected API for movies
     const effectiveSource = source || 
-      (formData.content_type === 'movie' ? 'tmdb' :
+      (formData.content_type === 'movie' ? apiSource :
        formData.content_type === 'anime' ? 'jikan' :
        formData.content_type === 'web_series' ? 'tvmaze' : 'tmdb');
     
@@ -437,9 +484,9 @@ export default function MovieFormPage({ params }) {
   };
 
   const contentTypeIcons = {
-    movie: Film,
+    movie: MovieIcon,
     web_series: Tv,
-    anime: Sparkles
+    anime: AutoFixHigh
   };
 
   if (loading) {
@@ -564,7 +611,7 @@ export default function MovieFormPage({ params }) {
                 <div className="p-6 rounded-2xl bg-[var(--surface-container)] ghost-border">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="font-display font-semibold text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-[var(--primary)]" />
+                      <AutoFixHigh className="w-5 h-5 text-[var(--primary)]" />
                       Auto-fill from External APIs
                     </h2>
                     {selectedApiData?._meta?.confidence && (
@@ -575,7 +622,34 @@ export default function MovieFormPage({ params }) {
                     )}
                   </div>
                   
-                  {/* Data source info */}
+                  {/* API Source Selector - Only for Movies */}
+                  {formData.content_type === 'movie' && (
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-sm text-[var(--on-surface-variant)]">API Source:</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApiSourceChange('tmdb')}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            apiSource === 'tmdb'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]'
+                          }`}
+                        >
+                          TMDB
+                        </button>
+                        <button
+                          onClick={() => handleApiSourceChange('omdb')}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            apiSource === 'omdb'
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]'
+                          }`}
+                        >
+                          OMDB
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {selectedApiData?._meta?.source && (
                     <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-[var(--surface-container-low)]">
                       <span className="text-sm text-[var(--on-surface-variant)]">Data source:</span>
@@ -600,7 +674,7 @@ export default function MovieFormPage({ params }) {
                           className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                         />
                         {apiLoading && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-[var(--primary)]" />
+                          <CircularProgress size={20} className="absolute right-3 top-1/2 -translate-y-1/2" />
                         )}
                       </div>
                     </div>
@@ -621,7 +695,7 @@ export default function MovieFormPage({ params }) {
                               <img src={result.posterUrl} alt="" className="w-12 h-16 object-cover rounded" />
                             ) : (
                               <div className="w-12 h-16 rounded bg-[var(--surface-container)] flex items-center justify-center">
-                                <Film className="w-6 h-6" />
+                                <MovieIcon className="w-6 h-6" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
@@ -644,7 +718,11 @@ export default function MovieFormPage({ params }) {
                   </div>
                   
                   <p className="text-xs text-[var(--on-surface-variant)] mt-2">
-                    {formData.content_type === 'movie' && "Using TMDB - Search movies by title"}
+                    {formData.content_type === 'movie' && (
+                      apiSource === 'tmdb' 
+                        ? "Using TMDB - Search movies by title" 
+                        : "Using OMDB (Open Movie Database) - Search movies by title"
+                    )}
                     {formData.content_type === 'anime' && "Using Jikan (MyAnimeList) - Search anime by title"}
                     {formData.content_type === 'web_series' && "Using TVMaze - Search web series by title"}
                   </p>
@@ -709,6 +787,18 @@ export default function MovieFormPage({ params }) {
                         onChange={(e) => setFormData({ ...formData, release_year: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                         required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.duration}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
+                        placeholder="e.g., 120"
                       />
                     </div>
 
@@ -837,7 +927,7 @@ export default function MovieFormPage({ params }) {
                       
                       {formData.scenes_gallery.length === 0 && (
                         <div className="p-8 border-2 border-dashed border-[var(--outline-variant)]/30 rounded-lg text-center">
-                          <Package className="w-12 h-12 mx-auto mb-2 text-[var(--on-surface-variant)]" />
+                          <Inventory className="w-12 h-12 mx-auto mb-2 text-[var(--on-surface-variant)]" />
                           <p className="text-sm text-[var(--on-surface-variant)]">No scene images added yet</p>
                           <p className="text-xs text-[var(--on-surface-variant)] mt-1">Add scene images to showcase content visuals</p>
                         </div>

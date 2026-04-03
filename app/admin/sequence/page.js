@@ -3,17 +3,31 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/toast';
-import { 
-  ChevronLeft, 
-  GripVertical,
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Card,
+  CardContent,
+  Avatar,
+  Skeleton,
+  Paper,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
+import {
+  ArrowBack,
   Save,
-  Film,
-  ArrowUp,
-  ArrowDown
-} from 'lucide-react';
-import { motion } from 'motion/react';
+  DragHandle,
+  Movie,
+  ArrowUpward,
+  ArrowDownward,
+  Search,
+} from '@mui/icons-material';
 import Image from 'next/image';
+import { useToast } from '@/components/toast';
+import { motion } from 'motion/react';
 
 export default function MovieSequencePage() {
   const router = useRouter();
@@ -22,6 +36,13 @@ export default function MovieSequencePage() {
   const [saving, setSaving] = useState(false);
   const [movies, setMovies] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter movies based on search
+  const filteredMovies = movies.filter(movie =>
+    movie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    movie.industry?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     fetchMovies();
@@ -117,138 +138,151 @@ export default function MovieSequencePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Skeleton variant="circular" width={40} height={40} />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/dashboard"
-              className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
+      <Paper sx={{ position: 'sticky', top: 0, zIndex: 40, borderRadius: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Link href="/admin/dashboard" passHref style={{ textDecoration: 'none' }}>
+              <IconButton>
+                <ArrowBack />
+              </IconButton>
             </Link>
-            <div>
-              <h1 className="font-display font-bold text-xl">Manage Sequence</h1>
-              <p className="text-sm text-[var(--on-surface-variant)]">
-                Drag & drop to reorder movie display
-              </p>
-            </div>
-          </div>
-          
-          <button
+            <Box>
+              <Typography variant="h6" fontWeight={700}>Manage Sequence</Typography>
+              <Typography variant="caption" color="text.secondary">Drag & drop to reorder movie display</Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Save />}
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl gradient-btn font-medium text-[var(--on-primary)] disabled:opacity-50"
+            sx={{ borderRadius: 3 }}
           >
-            <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Order'}
-          </button>
-        </div>
-      </header>
+          </Button>
+        </Box>
+      </Paper>
 
-      {/* Content */}
-      <div className="p-6">
-        <div className="max-w-3xl mx-auto">
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+          {/* Search Filter */}
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search movies by name or industry..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+
           {/* Instructions */}
-          <div className="mb-6 p-4 rounded-xl bg-[var(--surface-container)] ghost-border">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--primary)]/10">
-                <GripVertical className="w-5 h-5 text-[var(--primary)]" />
-              </div>
-              <p className="text-sm text-[var(--on-surface-variant)]">
-                Drag and drop movies to reorder them. Click Save Order when done. 
+          <Card sx={{ mb: 3 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <DragHandle sx={{ color: 'white' }} />
+              </Avatar>
+              <Typography variant="body2" color="text.secondary">
+                Drag and drop movies to reorder them. Click Save Order when done.
                 You can also use the arrow buttons to move items up or down.
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </CardContent>
+          </Card>
 
           {/* Movie List */}
-          <div className="space-y-2">
-            {movies.map((movie, index) => (
-              <motion.div
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {filteredMovies.map((movie, index) => (
+              <Card
                 key={movie.id}
-                layout
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
                 onDragOver={(e) => handleDragOver(e, index)}
-                className="flex items-center gap-4 p-4 rounded-xl bg-[var(--surface-container)] ghost-border cursor-move hover:border-[var(--primary)]/30 transition-colors group"
+                sx={{
+                  cursor: 'move',
+                  '&:hover': { borderColor: 'primary.main', border: 1 },
+                }}
               >
-                {/* Drag Handle */}
-                <div className="p-2 rounded-lg bg-[var(--surface-bright)] text-[var(--on-surface-variant)]">
-                  <GripVertical className="w-5 h-5" />
-                </div>
+                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  {/* Drag Handle */}
+                  <Avatar sx={{ bgcolor: 'background.paper', width: 36, height: 36 }}>
+                    <DragHandle color="action" />
+                  </Avatar>
 
-                {/* Sequence Number */}
-                <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-                  <span className="font-semibold text-[var(--primary)] text-sm">{index + 1}</span>
-                </div>
+                  {/* Sequence Number */}
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: 14 }}>
+                    {index + 1}
+                  </Avatar>
 
-                {/* Movie Poster */}
-                <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-[var(--surface-bright)] flex-shrink-0">
-                  {movie.poster_url ? (
-                    <Image
-                      src={movie.poster_url}
-                      alt={movie.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <Film className="w-6 h-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-                  )}
-                </div>
-
-                {/* Movie Info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{movie.name}</h3>
-                  <p className="text-sm text-[var(--on-surface-variant)]">
-                    {movie.industry} • {movie.release_year} • {movie.rating}/10
-                  </p>
-                </div>
-
-                {/* Move Buttons */}
-                <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => moveUp(index)}
-                    disabled={index === 0}
-                    className="p-1.5 rounded hover:bg-[var(--surface-bright)] disabled:opacity-30 disabled:cursor-not-allowed"
+                  {/* Movie Poster */}
+                  <Avatar
+                    variant="rounded"
+                    src={movie.poster_url}
+                    sx={{ width: 48, height: 64, bgcolor: 'background.paper' }}
                   >
-                    <ArrowUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => moveDown(index)}
-                    disabled={index === movies.length - 1}
-                    className="p-1.5 rounded hover:bg-[var(--surface-bright)] disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <ArrowDown className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
+                    <Movie />
+                  </Avatar>
+
+                  {/* Movie Info */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" fontWeight={600} noWrap>{movie.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {movie.industry} • {movie.release_year} • {movie.rating}/10
+                    </Typography>
+                  </Box>
+
+                  {/* Move Buttons */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => moveUp(index)}
+                      disabled={index === 0}
+                    >
+                      <ArrowUpward fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => moveDown(index)}
+                      disabled={index === movies.length - 1}
+                    >
+                      <ArrowDownward fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
             ))}
-          </div>
+          </Box>
 
-          {movies.length === 0 && (
-            <div className="text-center py-12">
-              <Film className="w-12 h-12 mx-auto mb-4 text-[var(--on-surface-variant)]" />
-              <p className="text-[var(--on-surface-variant)]">No movies found</p>
-              <Link
-                href="/admin/movies/new"
-                className="inline-block mt-4 text-[var(--primary)] hover:underline"
-              >
-                Add your first movie
+          {filteredMovies.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Movie sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+              <Typography color="text.secondary">
+                {searchQuery ? 'No movies match your search' : 'No movies found'}
+              </Typography>
+              <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }}>
+                <Typography color="primary" sx={{ mt: 2, display: 'inline-block' }}>
+                  Add your first movie
+                </Typography>
               </Link>
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
