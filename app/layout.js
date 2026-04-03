@@ -90,7 +90,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="monetag" content="36e3ca9b3bd39dbb4889f75139c4f534" />
+        <meta name="monetag" content="cc0b89e59eb0afa4f8c43ec2b08f5df1">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
