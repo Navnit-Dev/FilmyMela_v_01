@@ -62,7 +62,7 @@ export const metadata = {
   },
   manifest: '/site.webmanifest',
   verification: {
-    google: 'OYP0Td0V_8K4JyLfR5RaOj5Mfs0b7GXeyukCWSgmJoc',
+    google: 'EXvvfD9Pzvc1slojtlRV513EavOrMO89-OjU3PIgrJE',
   },
   alternates: {
     canonical: '/',
