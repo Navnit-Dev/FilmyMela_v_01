@@ -17,8 +17,6 @@ import {
   Skeleton,
   InputAdornment,
   Paper,
-  Snackbar,
-  Alert,
   Avatar,
   Dialog,
   DialogTitle,
@@ -33,12 +31,12 @@ import {
   Send,
   Info,
 } from '@mui/icons-material';
+import { toast } from 'react-hot-toast';
 
 export default function AdminSettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [notification, setNotification] = useState(null);
   
   const [settings, setSettings] = useState({
     maintenance_mode: false,
@@ -85,12 +83,12 @@ export default function AdminSettingsPage() {
       });
 
       if (res.ok) {
-        showNotification('Settings saved successfully', 'success');
+        toast.success('Settings saved successfully');
       } else {
-        showNotification('Failed to save settings', 'error');
+        toast.error('Failed to save settings');
       }
     } catch (error) {
-      showNotification('Error saving settings', 'error');
+      toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -105,19 +103,15 @@ export default function AdminSettingsPage() {
       });
 
       if (res.ok) {
-        showNotification('Test message sent successfully!', 'success');
+        toast.success('Test message sent successfully');
       } else {
-        showNotification('Failed to send test message', 'error');
+        toast.error('Failed to send test message');
       }
     } catch (error) {
-      showNotification('Error sending test message', 'error');
+      toast.error('Failed to send test message');
     }
   };
 
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   if (loading) {
     return (
@@ -263,16 +257,6 @@ export default function AdminSettingsPage() {
         </Box>
       </Box>
 
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={3000}
-        onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
-          {notification?.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

@@ -11,7 +11,6 @@ import {
   TextField,
   Button,
   Typography,
-  Alert,
   InputAdornment,
   IconButton,
   CircularProgress,
@@ -22,6 +21,7 @@ import {
   Lock,
   Mail,
 } from '@mui/icons-material';
+import { toast } from 'react-hot-toast';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -29,12 +29,10 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const res = await fetch('/api/admin/login', {
@@ -49,10 +47,11 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Login failed');
       }
 
+      toast.success('Login successful!');
       router.push('/admin/dashboard');
       router.refresh();
     } catch (err) {
-      setError(err.message);
+      toast.error('Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -78,12 +77,6 @@ export default function AdminLoginPage() {
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
               Sign in to manage your movie platform
             </Typography>
-
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <TextField

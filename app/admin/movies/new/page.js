@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import BootScreen from '../../../../components/boot-screen';
 
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -53,8 +55,7 @@ import {
   Storage,
   OpenInNew,
   Star,
-  
-  Security,
+  // Security,
 } from '@mui/icons-material';
 
 export default function MovieFormPage({ params }) {
@@ -64,8 +65,8 @@ export default function MovieFormPage({ params }) {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [activeStep, setActiveStep] = useState(1);
+  const [bootScreenComplete, setBootScreenComplete] = useState(false);
   
   // Reference data
   const [genres, setGenres] = useState([]);
@@ -108,6 +109,8 @@ export default function MovieFormPage({ params }) {
     is_in_parts: false,
     download_urls: {},
     download_parts: [],
+    use_episode_links: false,
+    episode_links: [],
     featured: false,
     trending: false,
     visible: true,
@@ -121,6 +124,12 @@ export default function MovieFormPage({ params }) {
 
   // Download parts state
   const [newPart, setNewPart] = useState({ name: '', episode_range: '', downloads: {} });
+  
+  // Episode links state
+  const [episodeCount, setEpisodeCount] = useState('');
+  const [newEpisodeQuality, setNewEpisodeQuality] = useState('720p');
+  const [newEpisodeUrl, setNewEpisodeUrl] = useState('');
+  const [selectedEpisodeForLink, setSelectedEpisodeForLink] = useState(1);
 
   // Fetch reference data on mount
   useEffect(() => {
@@ -138,7 +147,7 @@ export default function MovieFormPage({ params }) {
       if (industriesRes.ok) setIndustries((await industriesRes.json()).industries);
       if (contentTypesRes.ok) setContentTypes((await contentTypesRes.json()).contentTypes);
     } catch (error) {
-      console.error('Error fetching reference data:', error);
+      toast.error('Error fetching genres: ' + error.message);
     }
   };
 
@@ -162,7 +171,7 @@ export default function MovieFormPage({ params }) {
         });
       }
     } catch (error) {
-      showNotification('Error loading movie', 'error');
+      toast.error('Error fetching movie: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -183,24 +192,19 @@ export default function MovieFormPage({ params }) {
       });
 
       if (res.ok) {
-        showNotification(isEdit ? 'Movie updated successfully' : 'Movie created successfully', 'success');
+        toast.success('Movie saved successfully');
         setTimeout(() => {
           router.push('/admin/movies');
         }, 1500);
       } else {
         const error = await res.json();
-        showNotification(error.message || 'Error saving movie', 'error');
+        toast.error(error.error || 'Failed to save movie');
       }
     } catch (error) {
-      showNotification('Error saving movie', 'error');
+      toast.error('Error saving movie: ' + error.message);
     } finally {
       setSaving(false);
     }
-  };
-
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   // Multi-Source API Search with debounce
@@ -227,7 +231,7 @@ export default function MovieFormPage({ params }) {
           setShowApiDropdown(true);
         }
       } catch (error) {
-        console.error('API search failed:', error);
+        toast.error('API search failed: ' + error.message);
       } finally {
         setApiLoading(false);
       }
@@ -319,7 +323,7 @@ export default function MovieFormPage({ params }) {
           const matchedItems = [];
           if (matchedGenreNames.length > 0) matchedItems.push(`${matchedGenreNames.length} genre(s)`);
           if (matchedIndustryNames.length > 0) matchedItems.push(`${matchedIndustryNames.length} industry(s)`);
-          showNotification(`Auto-matched: ${matchedItems.join(', ')}`, 'info');
+          toast.success(`Auto-matched: ${matchedItems.join(', ')}`);
         }
         
         setShowApiDropdown(false);
@@ -328,13 +332,10 @@ export default function MovieFormPage({ params }) {
         // Show success with confidence info
         const confidence = data._meta?.confidence;
         const sourceName = data._meta?.source?.toUpperCase() || 'API';
-        showNotification(
-          `Data loaded from ${sourceName} (${confidence?.score || 0}% confidence)`, 
-          confidence?.level === 'high' ? 'success' : confidence?.level === 'medium' ? 'info' : 'warning'
-        );
+        toast.success(`Data loaded from ${sourceName} (${confidence?.score || 0}% confidence)`);
       }
     } catch (error) {
-      showNotification('Failed to load content details', 'error');
+      toast.error('Failed to load content details');
     } finally {
       setApiLoading(false);
     }
@@ -458,6 +459,14 @@ export default function MovieFormPage({ params }) {
     }));
   };
 
+  // Fixed function to add new quality to a part
+  const addQualityToPart = (partId) => {
+    const quality = prompt('Enter quality (e.g., 720p, 1080p):');
+    if (quality && quality.trim()) {
+      updateDownloadPart(partId, quality.trim(), '');
+    }
+  };
+
   const removeDownloadPart = (partId) => {
     setFormData(prev => ({
       ...prev,
@@ -467,6 +476,27 @@ export default function MovieFormPage({ params }) {
 
   const removeScene = (url) => {
     setFormData(prev => ({ ...prev, scenes_gallery: prev.scenes_gallery.filter(s => s !== url) }));
+  };
+
+  // Episode links management functions
+  const generateEpisodeFields = () => {
+    const count = parseInt(episodeCount);
+    if (!count || count <= 0) return;
+    
+    const links = [];
+    for (let i = 1; i <= count; i++) {
+      links.push({ episode: i, quality: '720p', url: '' });
+    }
+    setFormData(prev => ({ ...prev, episode_links: links }));
+  };
+
+  const updateEpisodeLink = (episodeIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      episode_links: prev.episode_links.map((link, index) =>
+        index === episodeIndex ? { ...link, [field]: value } : link
+      )
+    }));
   };
 
   const addDownload = () => {
@@ -500,8 +530,10 @@ export default function MovieFormPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface)]">
-      {/* Header */}
+    <div>
+      <BootScreen />
+      <div className="min-h-screen bg-[var(--surface)]">
+        {/* Header */}
       <header className="sticky top-0 z-40 glass ghost-border">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
@@ -738,7 +770,7 @@ export default function MovieFormPage({ params }) {
                       <label className="block text-sm font-medium mb-2">Title *</label>
                       <input
                         type="text"
-                        value={formData.name}
+                        value={formData.name || ''}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                         required
@@ -749,7 +781,7 @@ export default function MovieFormPage({ params }) {
                       <label className="block text-sm font-medium mb-2">Tagline</label>
                       <input
                         type="text"
-                        value={formData.tagline}
+                        value={formData.tagline || ''}
                         onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                       />
@@ -758,7 +790,7 @@ export default function MovieFormPage({ params }) {
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium mb-2">Description *</label>
                       <textarea
-                        value={formData.description}
+                        value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={4}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30 resize-none"
@@ -773,7 +805,7 @@ export default function MovieFormPage({ params }) {
                         min="0"
                         max="10"
                         step="0.1"
-                        value={formData.rating}
+                        value={formData.rating || ''}
                         onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                       />
@@ -785,7 +817,7 @@ export default function MovieFormPage({ params }) {
                         type="number"
                         min="1900"
                         max="2099"
-                        value={formData.release_year}
+                        value={formData.release_year || ''}
                         onChange={(e) => setFormData({ ...formData, release_year: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                         required
@@ -797,7 +829,7 @@ export default function MovieFormPage({ params }) {
                       <input
                         type="number"
                         min="1"
-                        value={formData.duration}
+                        value={formData.duration || ''}
                         onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                         placeholder="e.g., 120"
@@ -812,7 +844,7 @@ export default function MovieFormPage({ params }) {
                           <input
                             type="number"
                             min="1"
-                            value={formData.total_episodes}
+                            value={formData.total_episodes || ''}
                             onChange={(e) => setFormData({ ...formData, total_episodes: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                           />
@@ -822,7 +854,7 @@ export default function MovieFormPage({ params }) {
                           <input
                             type="number"
                             min="1"
-                            value={formData.seasons}
+                            value={formData.seasons || ''}
                             onChange={(e) => setFormData({ ...formData, seasons: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                           />
@@ -852,7 +884,7 @@ export default function MovieFormPage({ params }) {
                         <label className="block text-sm font-medium mb-2">Poster URL</label>
                         <input
                           type="url"
-                          value={formData.poster_url}
+                          value={formData.poster_url || ''}
                           onChange={(e) => setFormData({ ...formData, poster_url: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                           placeholder="https://example.com/poster.jpg"
@@ -867,7 +899,7 @@ export default function MovieFormPage({ params }) {
                         <label className="block text-sm font-medium mb-2">Backdrop URL</label>
                         <input
                           type="url"
-                          value={formData.backdrop_url}
+                          value={formData.backdrop_url || ''}
                           onChange={(e) => setFormData({ ...formData, backdrop_url: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                           placeholder="https://example.com/backdrop.jpg"
@@ -1156,8 +1188,8 @@ export default function MovieFormPage({ params }) {
                                 </div>
                               ))}
                               <button
-                                onClick={() => updateDownloadPart(part.id, '', '')}
-                                className="px-2 py-1 rounded bg-[var(--primary)] text-[var(--on-primary)] text-sm"
+                                onClick={() => addQualityToPart(part.id)}
+                                className="px-2 py-1 rounded bg-[var(--primary)] text-[var(--on-primary)] text-sm hover:opacity-80 transition-opacity"
                               >
                                 Add Quality
                               </button>
@@ -1168,12 +1200,86 @@ export default function MovieFormPage({ params }) {
                     </div>
                   )}
 
+                  {/* Episode Links Toggle */}
+                  {(formData.content_type === 'web_series' || formData.content_type === 'anime') && (
+                    <div className="p-4 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                      <div className="flex items-center gap-4 mb-4">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.use_episode_links}
+                            onChange={(e) => setFormData({ ...formData, use_episode_links: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-[var(--surface-bright)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]" />
+                        </label>
+                        <span className="text-sm font-medium">
+                          {formData.use_episode_links ? 'Link Per Episode Mode' : 'Use Standard Download Format'}
+                        </span>
+                      </div>
+
+                      {formData.use_episode_links && (
+                        <div className="space-y-4">
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              value={episodeCount}
+                              onChange={(e) => setEpisodeCount(e.target.value)}
+                              className="w-32 px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--outline-variant)]/30"
+                              placeholder="Total Episodes"
+                              min="1"
+                            />
+                            <button
+                              onClick={generateEpisodeFields}
+                              disabled={!episodeCount || parseInt(episodeCount) <= 0}
+                              className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--on-primary)] disabled:opacity-50"
+                            >
+                              Generate Episode Fields
+                            </button>
+                          </div>
+
+                          {formData.episode_links.length > 0 && (
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                              <p className="text-sm text-[var(--on-surface-variant)]">
+                                Total: {formData.episode_links.length} episodes
+                              </p>
+                              {formData.episode_links.map((link, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 bg-[var(--surface)] rounded-lg">
+                                  <span className="w-16 text-sm font-medium">EP {link.episode}:</span>
+                                  <select
+                                    value={link.quality}
+                                    onChange={(e) => updateEpisodeLink(index, 'quality', e.target.value)}
+                                    className="w-24 px-2 py-1 rounded bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-sm"
+                                  >
+                                    <option value="360p">360p</option>
+                                    <option value="480p">480p</option>
+                                    <option value="720p">720p</option>
+                                    <option value="1080p">1080p</option>
+                                    <option value="2160p">2160p</option>
+                                    <option value="4K">4K</option>
+                                  </select>
+                                  <input
+                                    type="url"
+                                    value={link.url}
+                                    onChange={(e) => updateEpisodeLink(index, 'url', e.target.value)}
+                                    className="flex-1 px-2 py-1 rounded bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 text-sm"
+                                    placeholder={`Download URL for Episode ${link.episode}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Video URL */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Video URL</label>
                     <input
                       type="url"
-                      value={formData.video_url}
+                      value={formData.video_url || ''}
                       onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                       className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                       placeholder="https://example.com/video.mp4"
@@ -1283,20 +1389,8 @@ export default function MovieFormPage({ params }) {
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Notification */}
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg toast-${notification.type}`}
-          >
-            <p className="font-medium">{notification.message}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    </div>
     </div>
   );
 }
+

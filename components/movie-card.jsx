@@ -4,20 +4,35 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
-import { Play, Clock, Star, Eye, Film } from 'lucide-react';
+import { Play, Clock, Star, Eye, Film, Heart } from 'lucide-react';
+import { useWishlist } from '@/components/wishlist-context';
+import { useToast } from '@/components/toast';
 
 export function MovieCard({ movie, variant = 'default' }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const { showToast } = useToast();
 
   const isCompact = variant === 'compact';
+  const inWishlist = isInWishlist(movie.id);
   
   // Determine if device supports hover (for touch devices)
   const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
   
   // Use touch state for mobile, hover for desktop
   const showOverlay = supportsHover ? isHovered : isTouched;
+
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const added = toggleWishlist(movie);
+    showToast(
+      added ? 'Added to wishlist' : 'Removed from wishlist',
+      added ? 'success' : 'info'
+    );
+  };
 
   return (
     <motion.div
@@ -92,6 +107,18 @@ export function MovieCard({ movie, variant = 'default' }) {
                 <span className="text-[10px] sm:text-xs font-semibold">{movie.rating}</span>
               </div>
             )}
+
+            {/* Wishlist Button - Top Right, below rating */}
+            <button
+              onClick={handleWishlistClick}
+              className={`absolute top-8 sm:top-10 right-2 p-1.5 sm:p-2 rounded-lg backdrop-blur-sm transition-all hover:scale-110 ${
+                inWishlist 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-black/60 text-white hover:bg-red-500/80'
+              }`}
+            >
+              <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${inWishlist ? 'fill-current' : ''}`} />
+            </button>
 
             {/* Genre Tags - Bottom (always visible on mobile preview) */}
             <div 

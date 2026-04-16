@@ -23,8 +23,6 @@ import {
   FormControlLabel,
   Radio,
   Paper,
-  Snackbar,
-  Alert,
   Chip,
   Avatar,
   Tooltip,
@@ -41,6 +39,7 @@ import {
   Save,
 } from '@mui/icons-material';
 import { motion } from 'motion/react';
+import { toast } from 'react-hot-toast';
 
 export default function SectionsManagementPage() {
   const router = useRouter();
@@ -52,7 +51,6 @@ export default function SectionsManagementPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState(null);
-  const [notification, setNotification] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
 
   // Form states
@@ -88,20 +86,15 @@ export default function SectionsManagementPage() {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      showNotification('Failed to load data', 'error');
+      toast.error('Error fetching data: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
   const handleCreateSection = async () => {
     if (!sectionName || !selectedValue) {
-      showNotification('Please fill in all fields', 'error');
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -122,14 +115,14 @@ export default function SectionsManagementPage() {
         setSections([...sections, newSection]);
         setCreateModalOpen(false);
         resetForm();
-        showNotification('Section created successfully', 'success');
+        toast.success('Section created successfully');
       } else {
         const error = await res.json();
-        showNotification(error.error || 'Failed to create section', 'error');
+        toast.error('Error creating section: ' + error.message);
       }
     } catch (error) {
       console.error('Error creating section:', error);
-      showNotification('Failed to create section', 'error');
+      toast.error('Error creating section: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -147,13 +140,13 @@ export default function SectionsManagementPage() {
         setSections(sections.filter((s) => s.id !== sectionToDelete.id));
         setDeleteModalOpen(false);
         setSectionToDelete(null);
-        showNotification('Section deleted successfully', 'success');
+        toast.success('Section deleted successfully');
       } else {
-        showNotification('Failed to delete section', 'error');
+        toast.error('Error deleting section: ' + error.message);
       }
     } catch (error) {
       console.error('Error deleting section:', error);
-      showNotification('Failed to delete section', 'error');
+      toast.error('Error deleting section: ' + error.message);
     }
   };
 
@@ -199,13 +192,13 @@ export default function SectionsManagementPage() {
       });
 
       if (res.ok) {
-        showNotification('Section order saved successfully', 'success');
+        toast.success('Section order saved successfully');
       } else {
-        showNotification('Failed to save order', 'error');
+        toast.error('Failed to save section order');
       }
     } catch (error) {
       console.error('Error saving order:', error);
-      showNotification('Failed to save order', 'error');
+      toast.error('Failed to save section order');
     } finally {
       setSaving(false);
     }
@@ -316,10 +309,9 @@ export default function SectionsManagementPage() {
               <motion.div
                 key={section.id}
                 layout
-                drag
-                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                onDragStart={() => setDraggedItem(index)}
-                onDragEnd={handleDragEnd}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
               >
                 <Card
                   draggable
@@ -328,8 +320,12 @@ export default function SectionsManagementPage() {
                   onDragOver={(e) => handleDragOver(e, index)}
                   sx={{
                     cursor: 'move',
-                    '&:hover': { borderColor: 'primary.main', border: 1 },
+                    border: draggedItem === index ? '2px dashed' : '1px solid transparent',
+                    borderColor: draggedItem === index ? 'primary.main' : 'divider',
                     borderRadius: 3,
+                    '&:hover': { borderColor: 'primary.main', border: '1px solid' },
+                    transition: 'all 0.2s ease',
+                    opacity: draggedItem === index ? 0.7 : 1,
                   }}
                 >
                   <CardContent
@@ -495,15 +491,6 @@ export default function SectionsManagementPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Notification */}
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={3000}
-        onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={notification?.type || 'info'}>{notification?.message}</Alert>
-      </Snackbar>
     </Box>
   );
 }

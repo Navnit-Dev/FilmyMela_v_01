@@ -56,22 +56,38 @@ export async function POST(request) {
       }
     });
     
+    // Calculate has_scenes based on scenes_gallery
+    const hasScenes = cleanedFields.scenes_gallery && 
+                      Array.isArray(cleanedFields.scenes_gallery) && 
+                      cleanedFields.scenes_gallery.length > 0;
+    
     const movieData = {
       ...cleanedFields,
       genre: genre_names || [],
       industry: industry_names?.[0] || [],
+      has_scenes: hasScenes,
       sequence,
       created_by: user.id
     };
 
-    // Insert movie
+    // Insert movie using RPC to bypass schema cache issues
     const { data, error } = await supabase
-      .from('movies')
-      .insert(movieData)
-      .select()
-      .single();
+      .rpc('insert_movie_with_episodes', { movie_data: movieData });
 
-    if (error) throw error;
+    if (error) {
+      // Fallback to direct insert if RPC fails
+      const { data: directData, error: directError } = await supabase
+        .from('movies')
+        .insert({
+          ...movieData,
+          has_scenes: undefined
+        })
+        .select()
+        .single();
+      
+      if (directError) throw directError;
+      return NextResponse.json(directData, { status: 201 });
+    }
 
     // Trigger Telegram notification if enabled (direct, no auth needed)
     try {
@@ -144,6 +160,7 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit')) || 20;
     const offset = parseInt(searchParams.get('offset')) || 0;
     const search = searchParams.get('search') || '';
+    const hasScenes = searchParams.get('has_scenes');
 
     let query = supabase
       .from('movies')
@@ -153,11 +170,33 @@ export async function GET(request) {
       query = query.ilike('name', `%${search}%`);
     }
 
+    if (hasScenes !== null && hasScenes !== '') {
+      try {
+        query = query.eq('has_scenes', hasScenes === 'true');
+      } catch (e) {
+        // If has_scenes column not in cache, skip this filter
+        console.log('has_scenes filter skipped due to schema cache');
+      }
+    }
+
     const { data, error, count } = await query
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) {
+      // If error is about missing column, retry without that filter
+      if (error.message?.includes('has_scenes')) {
+        const { data: retryData, error: retryError, count: retryCount } = await supabase
+          .from('movies')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        
+        if (retryError) throw retryError;
+        return NextResponse.json({ movies: retryData || [], count: retryCount });
+      }
+      throw error;
+    }
 
     return NextResponse.json({ movies: data || [], count });
   } catch (error) {

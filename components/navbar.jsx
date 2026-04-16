@@ -9,19 +9,19 @@ import {
   Home, 
   Compass, 
   Heart, 
-  Menu, 
-  X, 
   User,
-  LogOut,
-  Settings
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useWishlist } from '@/components/wishlist-context';
+import { useAppDownload } from '@/hooks/use-app-download';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const pathname = usePathname();
+  const { wishlistCount } = useWishlist();
+  const { settings: appSettings } = useAppDownload();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,10 +95,15 @@ export function Navbar() {
             {/* Desktop Actions */}
             <div className="hidden lg:flex items-center gap-4">
               <Link
-                href="/watchlist"
-                className="p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+                href="/wishlist"
+                className="relative p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
               >
                 <Heart className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center bg-[var(--primary)] text-[var(--on-primary)] text-xs font-bold rounded-full">
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
+                  </span>
+                )}
               </Link>
               {showAdmin && (
                 <Link
@@ -111,77 +116,64 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
+            {/* Mobile Download App Button - Right side */}
+            <AnimatePresence>
+              {appSettings.enabled && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20,
+                    delay: 0.5
+                  }}
+                  className="lg:hidden"
+                >
+                  <Link href="/download-app">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--tertiary)] text-[var(--on-primary)] font-medium text-sm shadow-lg shadow-[var(--primary)]/30 overflow-hidden group"
+                    >
+                      {/* Animated shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ 
+                          repeat: Infinity,
+                          duration: 2,
+                          ease: 'linear',
+                          repeatDelay: 1
+                        }}
+                      />
+                      
+                      <Download className="w-4 h-4 relative z-10" />
+                      <span className="relative z-10 hidden sm:inline">Get App</span>
+                      
+                      {/* Pulse animation ring */}
+                      <motion.div
+                        className="absolute inset-0 rounded-xl border-2 border-[var(--primary)]"
+                        animate={{ 
+                          scale: [1, 1.1, 1],
+                          opacity: [0.5, 0, 0.5]
+                        }}
+                        transition={{ 
+                          repeat: Infinity,
+                          duration: 2,
+                          ease: 'easeInOut'
+                        }}
+                      />
+                    </motion.div>
+                  </Link>
+                </motion.div>
               )}
-            </button>
+            </AnimatePresence>
           </div>
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 lg:hidden"
-          >
-            <div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.div
-              className="absolute top-16 left-0 right-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20"
-            >
-              <div className="p-4 space-y-2">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      pathname === link.href
-                        ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
-                        : 'hover:bg-[var(--surface-container)]'
-                    }`}
-                  >
-                    <link.icon className="w-5 h-5" />
-                    <span className="font-medium">{link.label}</span>
-                  </Link>
-                ))}
-                <div className="border-t border-[var(--outline-variant)]/20 my-2" />
-                <Link
-                  href="/watchlist"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-                >
-                  <Heart className="w-5 h-5" />
-                  <span className="font-medium">Watchlist</span>
-                </Link>
-                {showAdmin && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="font-medium">Admin</span>
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

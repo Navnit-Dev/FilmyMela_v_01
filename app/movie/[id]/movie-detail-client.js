@@ -7,6 +7,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { MovieCard } from '@/components/movie-card';
 import { useToast } from '@/components/toast';
+import { useWishlist } from '@/components/wishlist-context';
 import { 
   Play, 
   Download, 
@@ -29,8 +30,18 @@ import {
 
 export default function MovieDetailClient({ movie }) {
   const { showToast } = useToast();
+  const { isInWishlist, toggleWishlist } = useWishlist();
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const inWishlist = isInWishlist(movie.id);
+
+  const handleWishlistClick = () => {
+    const added = toggleWishlist(movie);
+    showToast(
+      added ? 'Added to wishlist' : 'Removed from wishlist',
+      added ? 'success' : 'info'
+    );
+  };
 
   // Parse download URLs
   const downloadLinks = movie.download_urls || {};
@@ -244,6 +255,7 @@ export default function MovieDetailClient({ movie }) {
                       ⭐ Featured
                     </span>
                   )}
+                 
                   <span className="px-2 py-1 text-xs font-medium bg-[var(--surface-container)] rounded text-[var(--on-surface-variant)]">
                     {movie.industry}
                   </span>
@@ -396,9 +408,16 @@ export default function MovieDetailClient({ movie }) {
                   Share
                 </button>
 
-                <button className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] font-medium transition-colors">
-                  <Heart className="w-5 h-5" />
-                  Add to Watchlist
+                <button 
+                  onClick={handleWishlistClick}
+                  className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-colors ${
+                    inWishlist 
+                      ? 'bg-red-500 text-white hover:bg-red-600' 
+                      : 'bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)]'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
+                  {inWishlist ? 'In Wishlist' : 'Add to Wishlist'}
                 </button>
               </div>
             </div>
@@ -442,7 +461,7 @@ export default function MovieDetailClient({ movie }) {
             </div>
           )}
 
-          {/* Download Section */}
+          {/* Download Section - Standard Downloads */}
           {qualities.length > 0 && (
             <div className="mt-12 p-6 rounded-2xl bg-[var(--surface-container-low)] ghost-border">
               <h2 className="font-display font-bold text-xl lg:text-2xl mb-4 flex items-center gap-2">
@@ -462,6 +481,75 @@ export default function MovieDetailClient({ movie }) {
                     className="group flex items-center gap-3 px-5 py-3 rounded-xl bg-[var(--surface-container)] hover:bg-[var(--primary)] transition-all"
                   >
                     <span className="font-semibold">{quality}</span>
+                    <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Download Section - Download Parts */}
+          {movie.download_parts && movie.download_parts.length > 0 && (
+            <div className="mt-8 p-6 rounded-2xl bg-[var(--surface-container-low)] ghost-border">
+              <h2 className="font-display font-bold text-xl lg:text-2xl mb-4 flex items-center gap-2">
+                <Package className="w-6 h-6" />
+                Download by Parts
+              </h2>
+              <p className="text-sm text-[var(--on-surface-variant)] mb-4">
+                Download in parts - each part contains multiple episodes
+              </p>
+              <div className="space-y-4">
+                {movie.download_parts.map((part, index) => (
+                  <div key={part.id || index} className="p-4 rounded-xl bg-[var(--surface-container)]">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="font-semibold text-lg">{part.name}</span>
+                      <span className="text-sm text-[var(--on-surface-variant)]">({part.episode_range})</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(part.downloads || {}).map(([quality, url]) => (
+                        <a
+                          key={quality}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--surface-bright)] hover:bg-[var(--primary)] transition-all text-sm"
+                        >
+                          <span className="font-medium">{quality}</span>
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Download Section - Episode Links */}
+          {movie.use_episode_links && movie.episode_links && movie.episode_links.length > 0 && (
+            <div className="mt-8 p-6 rounded-2xl bg-[var(--surface-container-low)] ghost-border">
+              <h2 className="font-display font-bold text-xl lg:text-2xl mb-4 flex items-center gap-2">
+                <Download className="w-6 h-6" />
+                Download Episodes
+              </h2>
+              <p className="text-sm text-[var(--on-surface-variant)] mb-4">
+                Individual episode download links
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {movie.episode_links.map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between p-3 rounded-xl bg-[var(--surface-container)] hover:bg-[var(--primary)] transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 rounded-lg bg-[var(--primary)]/20 flex items-center justify-center font-semibold text-sm">
+                        EP{link.episode}
+                      </span>
+                      <span className="font-medium">{link.quality}</span>
+                    </div>
                     <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
                 ))}

@@ -17,8 +17,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar,
-  Alert,
   Skeleton,
   InputAdornment,
   FormControlLabel,
@@ -33,6 +31,7 @@ import {
   Search,
   LocalOffer,
 } from '@mui/icons-material';
+import { toast } from 'react-hot-toast';
 
 export default function GenreManagementPage() {
   const [genres, setGenres] = useState([]);
@@ -40,7 +39,6 @@ export default function GenreManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingGenre, setEditingGenre] = useState(null);
-  const [notification, setNotification] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -65,16 +63,12 @@ export default function GenreManagementPage() {
         setGenres(data.genres || []);
       }
     } catch (error) {
-      showNotification('Error loading genres', 'error');
+      toast.error('Error fetching genres: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,17 +84,17 @@ export default function GenreManagementPage() {
       });
 
       if (res.ok) {
-        showNotification(editingGenre ? 'Genre updated' : 'Genre created', 'success');
+        toast.success('Genre created successfully');
         setShowModal(false);
         setEditingGenre(null);
         resetForm();
         fetchGenres();
       } else {
         const error = await res.json();
-        showNotification(error.message || 'Error saving genre', 'error');
+        toast.error('Error creating genre: ' + error.message);
       }
     } catch (error) {
-      showNotification('Error saving genre', 'error');
+      toast.error('Error creating genre: ' + error.message);
     }
   };
 
@@ -113,13 +107,13 @@ export default function GenreManagementPage() {
       });
 
       if (res.ok) {
-        showNotification('Genre deleted', 'success');
+        toast.success('Genre deleted successfully');
         fetchGenres();
       } else {
-        showNotification('Error deleting genre', 'error');
+        toast.error('Error deleting genre: ' + error.message);
       }
     } catch (error) {
-      showNotification('Error deleting genre', 'error');
+      toast.error('Error deleting genre: ' + error.message);
     }
   };
 
@@ -361,16 +355,6 @@ export default function GenreManagementPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={3000}
-        onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
-          {notification?.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

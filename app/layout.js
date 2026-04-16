@@ -1,5 +1,8 @@
 import './globals.css';
 import { Providers } from '@/components/providers';
+import { BootScreenProvider } from '@/components/boot-screen-provider';
+import { MobileBottomNav } from '@/components/mobile-bottom-nav';
+import PopupModal from '@/components/popup-modal';
 
 export const metadata = {
   title: {
@@ -91,10 +94,14 @@ export default function RootLayout({ children }) {
       <head>
         
       </head>
-      <body className="antialiased">
-          <Providers>
-            {children}
-          </Providers>
+      <body className="antialiased pb-16 md:pb-0">
+          <BootScreenProvider>
+            <Providers>
+              {children}
+            </Providers>
+            <MobileBottomNav />
+            <PopupModal />
+          </BootScreenProvider>
       </body>
     </html>
   );

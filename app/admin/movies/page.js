@@ -23,8 +23,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar,
-  Alert,
   Pagination,
   InputAdornment,
   Tooltip,
@@ -46,6 +44,7 @@ import {
   ArrowBack,
   OpenInNew,
 } from '@mui/icons-material';
+import { toast } from 'react-hot-toast';
 
 export default function AdminMoviesPage() {
   const router = useRouter();
@@ -54,16 +53,16 @@ export default function AdminMoviesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterVisibility, setFilterVisibility] = useState('all');
+  const [filterHasScenes, setFilterHasScenes] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [movieToDelete, setMovieToDelete] = useState(null);
-  const [notification, setNotification] = useState(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
     fetchMovies();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, filterHasScenes]);
 
   const fetchMovies = async () => {
     try {
@@ -79,7 +78,7 @@ export default function AdminMoviesPage() {
       setMovies(data.movies || []);
       setTotalPages(Math.ceil((data.count || 0) / itemsPerPage));
     } catch (error) {
-      console.error('Error fetching movies:', error);
+      toast.error('Error fetching movies: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -95,12 +94,12 @@ export default function AdminMoviesPage() {
 
       if (res.ok) {
         setMovies(movies.filter(m => m.id !== movieToDelete.id));
-        showNotification('Movie deleted successfully', 'success');
+        toast.success('Movie deleted successfully');
       } else {
-        showNotification('Failed to delete movie', 'error');
+        toast.error('Failed to delete movie');
       }
     } catch (error) {
-      showNotification('Error deleting movie', 'error');
+      toast.error('Error deleting movie');
     }
 
     setDeleteModalOpen(false);
@@ -117,12 +116,14 @@ export default function AdminMoviesPage() {
 
       if (res.ok) {
         setMovies(movies.map(m => 
-          m.id === movie.id ? { ...m, visible: !m.visible } : m
+          m.id === movie.id ? { ...m, visible: !movie.visible } : m
         ));
-        showNotification(`Movie ${movie.visible ? 'hidden' : 'visible'}`, 'success');
+        toast.success(`Movie ${movie.visible ? 'hidden' : 'visible'}`);
+      } else {
+        toast.error('Failed to update movie');
       }
     } catch (error) {
-      showNotification('Error updating movie', 'error');
+      toast.error('Error updating movie');
     }
   };
 
@@ -138,10 +139,12 @@ export default function AdminMoviesPage() {
         setMovies(movies.map(m => 
           m.id === movie.id ? { ...m, featured: !movie.featured } : m
         ));
-        showNotification(`Movie ${movie.featured ? 'unfeatured' : 'featured'}`, 'success');
+        toast.success(`Movie ${movie.featured ? 'unfeatured' : 'featured'}`);
+      } else {
+        toast.error('Failed to update movie');
       }
     } catch (error) {
-      showNotification('Error updating movie', 'error');
+      toast.error('Error updating movie');
     }
   };
 
@@ -157,19 +160,16 @@ export default function AdminMoviesPage() {
         setMovies(movies.map(m => 
           m.id === movie.id ? { ...m, trending: !movie.trending } : m
         ));
-        showNotification(`Movie ${movie.trending ? 'removed from' : 'added to'} trending`, 'success');
+        toast.success(`Movie ${movie.trending ? 'removed from' : 'added to'} trending`);
+      } else {
+        toast.error('Failed to update movie');
       }
     } catch (error) {
-      showNotification('Error updating movie', 'error');
+      toast.error('Error updating movie');
     }
   };
 
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  // Filter movies based on search, type and visibility                                                                                
+  // Filter movies based on search, type, visibility and has_scenes
   const filteredMovies = movies.filter(movie => {
     const matchesSearch = !searchQuery || 
       movie.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -178,7 +178,13 @@ export default function AdminMoviesPage() {
     const matchesVisibility = filterVisibility === 'all' || 
       (filterVisibility === 'visible' && movie.visible) ||
       (filterVisibility === 'hidden' && !movie.visible);
-    return matchesSearch && matchesType && matchesVisibility;
+    // Check scenes_gallery length directly for Non-Scened status
+    const hasScenesGallery = movie.scenes_gallery && movie.scenes_gallery.length > 0;
+    const matchesHasScenes = filterHasScenes === 'all' || 
+      (filterHasScenes === 'true' && hasScenesGallery) ||
+      (filterHasScenes === 'false' && !hasScenesGallery);
+    
+    return matchesSearch && matchesType && matchesVisibility && matchesHasScenes;
   });
 
   if (loading) {
@@ -259,6 +265,19 @@ export default function AdminMoviesPage() {
               <MenuItem value="hidden">Hidden</MenuItem>
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Scenes Status</InputLabel>
+            <Select
+              value={filterHasScenes}
+              onChange={(e) => setFilterHasScenes(e.target.value)}
+              label="Scenes Status"
+              sx={{ borderRadius: 3 }}
+            >
+              <MenuItem value="all">All Movies</MenuItem>
+              <MenuItem value="true">Has Scenes</MenuItem>
+              <MenuItem value="false">Non-Scened</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
         {/* Movies Table */}
@@ -296,7 +315,7 @@ export default function AdminMoviesPage() {
                   </TableCell>
                   <TableCell>{movie.release_year}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       <Tooltip title={movie.visible ? 'Visible' : 'Hidden'}>
                         <IconButton size="small" onClick={() => toggleVisibility(movie)} color={movie.visible ? 'success' : 'default'}>
                           {movie.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
@@ -312,6 +331,14 @@ export default function AdminMoviesPage() {
                           <TrendingUp fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      {(!movie.scenes_gallery || movie.scenes_gallery.length === 0) && (
+                        <Chip 
+                          label="Non-Scened" 
+                          size="small" 
+                          color="error" 
+                          sx={{ borderRadius: 1, fontSize: '0.7rem', height: 24 }}
+                        />
+                      )}
                     </Box>
                   </TableCell>
                   <TableCell>
@@ -397,17 +424,6 @@ export default function AdminMoviesPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Notification */}
-      <Snackbar 
-        open={!!notification} 
-        autoHideDuration={3000} 
-        onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
-          {notification?.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

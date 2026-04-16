@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { ToastProvider } from '@/components/toast';
+import { WishlistProvider } from '@/components/wishlist-context';
 
 const SupabaseContext = createContext(null);
 
@@ -17,7 +18,9 @@ export function Providers({ children }) {
   return (
     <SupabaseContext.Provider value={{ supabase }}>
       <ToastProvider>
-        {children}
+        <WishlistProvider>
+          {children}
+        </WishlistProvider>
       </ToastProvider>
     </SupabaseContext.Provider>
   );

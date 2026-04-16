@@ -37,11 +37,18 @@ import {
   Security as SecurityIcon,
   Menu as MenuIcon,
   ChevronRight as ChevronRightIcon,
+  ChevronLeft as ChevronLeftIcon,
   ExpandLess,
   ExpandMore,
   ViewModule as ViewModuleIcon,
+  NotificationsActive as PopupIcon,
+  Dock as DockIcon,
+  ViewSidebar as ViewSidebarIcon,
+  Smartphone as SmartphoneIcon,
 } from '@mui/icons-material';
 import theme from './theme';
+import { AdminToast } from '../../components/admin-toast';
+import AdminDock from '../../components/admin-dock';
 
 const drawerWidth = 280;
 
@@ -62,7 +69,10 @@ export default function AdminLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [expandedItems, setExpandedItems] = useState({});
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [dockMode, setDockMode] = useState(false); // Toggle between sidebar and dock on desktop
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
   const hideSidebar = pathname === '/admin';
 
@@ -112,6 +122,7 @@ export default function AdminLayout({ children }) {
       ],
     },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChartIcon },
+    { label: 'Popups', href: '/admin/popups', icon: PopupIcon },
     {
       label: 'Management',
       icon: PeopleIcon,
@@ -121,6 +132,7 @@ export default function AdminLayout({ children }) {
       ],
     },
     { label: 'Settings', href: '/admin/settings', icon: SettingsIcon },
+    { label: 'App Download', href: '/admin/app-download', icon: SmartphoneIcon },
   ];
 
   const isActive = (href) => pathname === href || pathname.startsWith(`${href}/`);
@@ -131,16 +143,28 @@ export default function AdminLayout({ children }) {
 
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Box sx={{ width: 48, height: 48, borderRadius: 3, overflow: 'hidden', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Image src="/logo.jpeg" alt="FilmyMela" width={48} height={48} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        </Box>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, background: 'linear-gradient(45deg, #e91e63, #9c27b0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            FilmyMela
-          </Typography>
-          <Typography variant="caption" color="text.secondary">Admin Panel</Typography>
-        </Box>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, justifyContent: sidebarCollapsed ? 'center' : 'space-between' }}>
+        {!sidebarCollapsed && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ width: 40, height: 40, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Image src="/logo.jpeg" alt="FilmyMela" width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1rem', background: 'linear-gradient(45deg, #e91e63, #9c27b0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                FilmyMela
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>Admin Panel</Typography>
+            </Box>
+          </Box>
+        )}
+        {sidebarCollapsed && (
+          <Box sx={{ width: 40, height: 40, borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Image src="/logo.jpeg" alt="FilmyMela" width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </Box>
+        )}
+        <IconButton onClick={() => setSidebarCollapsed(!sidebarCollapsed)} size="small">
+          {sidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
       </Box>
 
       <Divider sx={{ mx: 2, borderColor: 'rgba(255,255,255,0.1)' }} />
@@ -215,15 +239,18 @@ export default function AdminLayout({ children }) {
 
   if (loading) {
     return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Skeleton variant="circular" width={40} height={40} />
-            <Skeleton variant="text" width={120} />
-          </Box>
-        </Box>
-      </ThemeProvider>
+      <div style={{ minHeight: '100vh', background: '#0f0f1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(90deg, #1a1a2e 25%, #252542 50%, #1a1a2e 75%)', backgroundSize: '200% 100%', animation: 'pulse 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 120, height: 20, borderRadius: 4, background: 'linear-gradient(90deg, #1a1a2e 25%, #252542 50%, #1a1a2e 75%)', backgroundSize: '200% 100%', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        </div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+        `}</style>
+      </div>
     );
   }
 
@@ -252,15 +279,51 @@ export default function AdminLayout({ children }) {
               {drawerContent}
             </Drawer>
 
-            <Drawer variant="permanent" sx={{ display: { xs: 'none', lg: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }} open>
-              {drawerContent}
-            </Drawer>
+            {/* Desktop Sidebar - shown when dockMode is false */}
+            {!dockMode && (
+              <Drawer variant="permanent" sx={{ display: { xs: 'none', lg: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: sidebarCollapsed ? 64 : drawerWidth, transition: 'width 0.3s ease' } }} open>
+                {drawerContent}
+              </Drawer>
+            )}
+
+            {/* Admin Dock - shown on tablet OR when dockMode is true on desktop */}
+            {(isTablet || dockMode) && <AdminDock onLogout={handleLogout} />}
           </>
         )}
 
-        <Box component="main" sx={{ flexGrow: 1, width: { lg: `calc(100% - ${hideSidebar ? 0 : drawerWidth}px)` }, ml: { lg: hideSidebar ? 0 : `${drawerWidth}px` }, pt: { xs: hideSidebar ? 0 : 8, lg: 0 } }}>
+        <Box component="main" sx={{ 
+          flexGrow: 1, 
+          width: { lg: `calc(100% - ${hideSidebar ? 0 : dockMode ? 0 : sidebarCollapsed ? 64 : drawerWidth}px)` }, 
+          ml: { lg: hideSidebar ? 0 : dockMode ? 0 : `${sidebarCollapsed ? 64 : drawerWidth}px` }, 
+          pt: { xs: hideSidebar ? 0 : 8, lg: 0 },
+          pb: { xs: isTablet ? 10 : 0, lg: dockMode ? 10 : 0 },
+          transition: 'margin-left 0.3s ease',
+          position: 'relative'
+        }}>
+          {/* Dock/Sidebar Toggle Button - Desktop only */}
+          {!hideSidebar && (
+            <IconButton
+              onClick={() => setDockMode(!dockMode)}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                display: { xs: 'none', lg: 'flex' },
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': { bgcolor: 'action.hover' },
+                zIndex: 10,
+              }}
+              size="small"
+              title={dockMode ? 'Switch to Sidebar' : 'Switch to Dock'}
+            >
+              {dockMode ? <ViewSidebarIcon /> : <DockIcon />}
+            </IconButton>
+          )}
           {children}
         </Box>
+        <AdminToast />
       </Box>
     </ThemeProvider>
   );

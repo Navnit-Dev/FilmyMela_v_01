@@ -75,11 +75,18 @@ export default function SearchPage() {
     }
   }, [recentSearches]);
 
+  // Track last searched query to prevent duplicates
+  const lastSearchedRef = useState('');
+
   // Debounced search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      performSearch(query);
-    }, 300);
+      // Only search if query changed and not empty
+      if (query.trim() && query !== lastSearchedRef[0]) {
+        lastSearchedRef[1](query);
+        performSearch(query);
+      }
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, [query, performSearch]);

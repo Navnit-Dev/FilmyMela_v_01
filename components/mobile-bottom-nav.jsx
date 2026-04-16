@@ -18,7 +18,7 @@ const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/movies', label: 'Browse', icon: Compass },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/watchlist', label: 'Watchlist', icon: Heart },
+  { href: '/wishlist', label: 'Watchlist', icon: Heart },
 ];
 
 export function MobileBottomNav() {

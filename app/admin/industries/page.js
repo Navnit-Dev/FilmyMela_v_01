@@ -17,8 +17,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar,
-  Alert,
   Skeleton,
   InputAdornment,
   FormControlLabel,
@@ -34,6 +32,7 @@ import {
   Business,
   Public,
 } from '@mui/icons-material';
+import { toast } from 'react-hot-toast';
 
 export default function IndustryManagementPage() {
   const [industries, setIndustries] = useState([]);
@@ -41,7 +40,6 @@ export default function IndustryManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingIndustry, setEditingIndustry] = useState(null);
-  const [notification, setNotification] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -65,16 +63,12 @@ export default function IndustryManagementPage() {
         setIndustries(data.industries || []);
       }
     } catch (error) {
-      showNotification('Error loading industries', 'error');
+      toast.error('Error fetching industries: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const showNotification = (message, type) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,17 +84,17 @@ export default function IndustryManagementPage() {
       });
 
       if (res.ok) {
-        showNotification(editingIndustry ? 'Industry updated' : 'Industry created', 'success');
+        toast.success('Industry created successfully');
         setShowModal(false);
         setEditingIndustry(null);
         resetForm();
         fetchIndustries();
       } else {
         const error = await res.json();
-        showNotification(error.message || 'Error saving industry', 'error');
+        toast.error('Error creating industry: ' + error.message);
       }
     } catch (error) {
-      showNotification('Error saving industry', 'error');
+      toast.error('Error creating industry: ' + error.message);
     }
   };
 
@@ -113,13 +107,13 @@ export default function IndustryManagementPage() {
       });
 
       if (res.ok) {
-        showNotification('Industry deleted', 'success');
+        toast.success('Industry deleted successfully');
         fetchIndustries();
       } else {
-        showNotification('Error deleting industry', 'error');
+        toast.error('Error deleting industry: ' + error.message);
       }
     } catch (error) {
-      showNotification('Error deleting industry', 'error');
+      toast.error('Error deleting industry: ' + error.message);
     }
   };
 
@@ -345,16 +339,6 @@ export default function IndustryManagementPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={!!notification}
-        autoHideDuration={3000}
-        onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={notification?.type || 'info'} onClose={() => setNotification(null)}>
-          {notification?.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

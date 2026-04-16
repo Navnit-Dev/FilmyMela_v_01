@@ -7,6 +7,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { MovieCard } from '@/components/movie-card';
 import { SkeletonGrid } from '@/components/skeletons';
+import UserLayout from '@/components/user-layout';
 import { 
   Filter, 
   Grid3X3, 
@@ -80,7 +81,11 @@ function MoviesContent() {
         setMovies(data.movies);
         setOffset(limit);
       } else {
-        setMovies(prev => [...prev, ...data.movies]);
+        setMovies(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const newMovies = data.movies.filter(m => !existingIds.has(m.id));
+          return [...prev, ...newMovies];
+        });
         setOffset(prev => prev + limit);
       }
       
@@ -134,8 +139,9 @@ function MoviesContent() {
   const activeFiltersCount = Object.values(filters).filter(Boolean).length - (filters.sort ? 1 : 0);
 
   return (
-    <main className="min-h-screen bg-[var(--surface)]">
-      <Navbar />
+    <UserLayout>
+      <main className="min-h-screen bg-[var(--surface)]">
+        <Navbar />
       
       <div className="pt-20 lg:pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,9 +151,7 @@ function MoviesContent() {
               <h1 className="font-display font-bold text-2xl lg:text-3xl text-[var(--on-surface)] mb-2">
                 Browse Movies
               </h1>
-              <p className="text-[var(--on-surface-variant)]">
-                Discover {movies.length}+ movies from around the world
-              </p>
+              
             </div>
             
             {/* Filter Toggle */}
@@ -278,10 +282,7 @@ function MoviesContent() {
             </div>
           )}
 
-          {/* Results Count */}
-          <div className="mb-4 text-sm text-[var(--on-surface-variant)]">
-            Showing {movies.length} movies
-          </div>
+         
 
           {/* Movies Grid */}
           {loading && movies.length === 0 ? (
@@ -321,7 +322,8 @@ function MoviesContent() {
       </div>
 
       <Footer />
-    </main>
+      </main>
+    </UserLayout>
   );
 }
 
