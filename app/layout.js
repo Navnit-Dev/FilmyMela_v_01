@@ -3,6 +3,7 @@ import { Providers } from '@/components/providers';
 import { BootScreenProvider } from '@/components/boot-screen-provider';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import PopupModal from '@/components/popup-modal';
+import { AllStructuredData } from '@/components/structured-data';
 
 export const metadata = {
   title: {
@@ -73,26 +74,10 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'FilmyMela',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://filmymela.com',
-    description: 'Discover, stream, and download your favorite movies.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${process.env.NEXT_PUBLIC_APP_URL || 'https://filmymela.com'}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
-  };
-
   return (
     <html lang="en" className="dark">
       <head>
-        
+        <AllStructuredData />
       </head>
       <body className="antialiased pb-16 md:pb-0">
           <BootScreenProvider>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import MovieDetailClient from './movie-detail-client';
 import { getMovieById } from '@/lib/movies';
+import { MovieStructuredData, VideoStructuredData } from '@/components/structured-data';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -65,5 +66,11 @@ export default async function MovieDetailPage({ params }) {
     notFound();
   }
 
-  return <MovieDetailClient movie={movie} />;
+  return (
+    <>
+      <MovieStructuredData movie={movie} />
+      <VideoStructuredData movie={movie} />
+      <MovieDetailClient movie={movie} />
+    </>
+  );
 }

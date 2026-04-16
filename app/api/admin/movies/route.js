@@ -14,7 +14,7 @@ export async function POST(request) {
     // Check admin role
     const { data: admin } = await supabase
       .from('admin_users')
-      .select('role')
+      .select('role, name')
       .eq('id', user.id)
       .single();
 
@@ -87,6 +87,25 @@ export async function POST(request) {
       
       if (directError) throw directError;
       return NextResponse.json(directData, { status: 201 });
+    }
+
+    // Log activity
+    try {
+      await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: user.id,
+          admin_name: admin.name,
+          admin_email: user.email,
+          action_type: 'create_movie',
+          action_description: `Created movie "${data.name}"`,
+          entity_type: 'movie',
+          entity_id: data.id,
+          entity_name: data.name,
+          metadata: { poster_url: data.poster_url }
+        });
+    } catch (logError) {
+      console.error('Error logging activity:', logError);
     }
 
     // Trigger Telegram notification if enabled (direct, no auth needed)

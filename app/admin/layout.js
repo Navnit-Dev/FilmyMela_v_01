@@ -45,6 +45,7 @@ import {
   Dock as DockIcon,
   ViewSidebar as ViewSidebarIcon,
   Smartphone as SmartphoneIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import theme from './theme';
 import { AdminToast } from '../../components/admin-toast';
@@ -129,6 +130,7 @@ export default function AdminLayout({ children }) {
       children: [
         { label: 'Admins', href: '/admin/admins', icon: SecurityIcon },
         { label: 'Users', href: '/admin/users', icon: PeopleIcon },
+        { label: 'Activity', href: '/admin/activity', icon: HistoryIcon },
       ],
     },
     { label: 'Settings', href: '/admin/settings', icon: SettingsIcon },

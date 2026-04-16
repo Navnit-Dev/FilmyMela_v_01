@@ -36,6 +36,28 @@ export async function POST(request) {
       );
     }
 
+    // Log admin login activity
+    try {
+      await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: adminUser.id,
+          admin_name: adminUser.name,
+          admin_email: adminUser.email,
+          action_type: 'login',
+          action_description: `Admin logged in`,
+          metadata: { role: adminUser.role }
+        });
+
+      // Update last seen
+      await supabase
+        .from('admin_users')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', adminUser.id);
+    } catch (logError) {
+      console.error('Error logging login activity:', logError);
+    }
+
     return NextResponse.json({
       success: true,
       user: {

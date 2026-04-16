@@ -85,6 +85,25 @@ export async function PUT(request, { params }) {
 
     if (error) throw error;
 
+    // Log activity
+    try {
+      await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: user.id,
+          admin_name: admin.name,
+          admin_email: user.email,
+          action_type: 'update_movie',
+          action_description: `Updated movie "${data.name}"`,
+          entity_type: 'movie',
+          entity_id: id,
+          entity_name: data.name,
+          metadata: { poster_url: data.poster_url }
+        });
+    } catch (logError) {
+      console.error('Error logging activity:', logError);
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('PUT Movie Error:', error);
@@ -171,7 +190,7 @@ export async function DELETE(request, { params }) {
 
     const { data: admin } = await supabase
       .from('admin_users')
-      .select('role')
+      .select('role, name')
       .eq('id', user.id)
       .single();
 
@@ -179,12 +198,38 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Get movie name before deleting
+    const { data: movie } = await supabase
+      .from('movies')
+      .select('name, poster_url')
+      .eq('id', id)
+      .single();
+
     const { error } = await supabase
       .from('movies')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    // Log activity
+    try {
+      await supabase
+        .from('admin_activity_logs')
+        .insert({
+          admin_id: user.id,
+          admin_name: admin.name,
+          admin_email: user.email,
+          action_type: 'delete_movie',
+          action_description: `Deleted movie "${movie?.name || id}"`,
+          entity_type: 'movie',
+          entity_id: id,
+          entity_name: movie?.name,
+          metadata: { poster_url: movie?.poster_url }
+        });
+    } catch (logError) {
+      console.error('Error logging activity:', logError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
