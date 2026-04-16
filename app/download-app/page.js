@@ -1,278 +1,257 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
-import { 
-  Download, 
-  ChevronLeft, 
-  Smartphone, 
-  Star, 
-  Shield, 
+import {
+  Download,
+  ChevronLeft,
+  Smartphone,
+  Star,
+  Shield,
   Zap,
   CheckCircle2,
   ArrowRight
 } from 'lucide-react';
 
+/* -----------------------------
+   PREMIUM PREVIEW GALLERY
+------------------------------*/
+function PreviewGallery({ images = [] }) {
+  return (
+    <div className="relative w-full py-12">
+
+      {/* Glow Background */}
+      <div className="absolute inset-0 -z-10 flex justify-center">
+        <div className="w-[420px] h-[420px] bg-[var(--primary)]/10 blur-[120px] rounded-full" />
+      </div>
+
+      {/* Scroll */}
+      <div className="overflow-x-auto no-scrollbar px-4">
+        <div className="flex gap-6 w-max mx-auto">
+
+          {images.map((src, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                delay: i * 0.07,
+                type: 'spring',
+                stiffness: 120,
+                damping: 14
+              }}
+              whileHover={{
+                scale: 1.12,
+                y: -18,
+                rotate: i % 2 === 0 ? -2 : 2,
+                zIndex: 50
+              }}
+              className="relative shrink-0 w-[180px] md:w-[220px] aspect-[9/19] rounded-[28px] overflow-hidden border border-white/10 bg-black shadow-2xl"
+            >
+              <Image
+                src={src}
+                alt={`preview-${i}`}
+                fill
+                className="object-cover"
+              />
+
+              {/* overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/5" />
+
+              {/* edge highlight */}
+              <div className="absolute inset-0 ring-1 ring-white/10 rounded-[28px]" />
+            </motion.div>
+          ))}
+
+        </div>
+      </div>
+
+      <p className="text-center text-xs text-[var(--on-surface-variant)] mt-6">
+        Swipe to explore screenshots
+      </p>
+    </div>
+  );
+}
+
+/* -----------------------------
+        MAIN PAGE
+------------------------------*/
 export default function DownloadAppPage() {
-  const [settings, setSettings] = useState({
-    enabled: false,
-    apk_url: '',
-    preview_images: [],
-    app_version: '1.0.0',
-    release_notes: ''
-  });
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const response = await fetch('/api/app-download');
-        const data = await response.json();
-        setSettings(data);
-      } catch (error) {
-        console.error('Error fetching app settings:', error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/app-download');
+      const data = await res.json();
+      setSettings(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    fetchSettings();
   }, []);
 
-  const handleDownload = async () => {
-    if (!settings.apk_url) return;
-    
-    setDownloading(true);
-    
-    // Track download
-    try {
-      await fetch('/api/app-download/track', { method: 'POST' });
-    } catch (e) {
-      // Silent fail for tracking
-    }
-    
-    // Trigger download
-    window.location.href = settings.apk_url;
-    
-    setTimeout(() => setDownloading(false), 2000);
-  };
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
+  const handleDownload = useCallback(async () => {
+    if (!settings?.apk_url || downloading) return;
+
+    setDownloading(true);
+
+    try {
+      fetch('/api/app-download/track', { method: 'POST' }).catch(() => {});
+      window.location.assign(settings.apk_url);
+    } finally {
+      setTimeout(() => setDownloading(false), 1500);
+    }
+  }, [settings, downloading]);
+
+  const features = [
+    { icon: Zap, title: 'Fast Streaming', desc: 'No buffering, instant playback' },
+    { icon: Shield, title: 'Secure', desc: 'Safe & private experience' },
+    { icon: Star, title: 'HD Quality', desc: 'Crystal clear visuals' }
+  ];
+
+  /* ---------- Loading ---------- */
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
+      <div className="min-h-screen grid place-items-center bg-[var(--surface)]">
         <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!settings.enabled) {
+  /* ---------- Disabled ---------- */
+  if (!settings?.enabled) {
     return (
-      <div className="min-h-screen bg-[var(--surface)] flex flex-col items-center justify-center p-4">
-        <Smartphone className="w-16 h-16 text-[var(--on-surface-variant)] mb-4" />
-        <h1 className="text-2xl font-bold text-[var(--on-surface)] mb-2">App Coming Soon</h1>
-        <p className="text-[var(--on-surface-variant)] text-center mb-6">
-          Our mobile app is currently under development. Check back later!
+      <div className="min-h-screen grid place-items-center text-center px-4">
+        <Smartphone className="w-14 h-14 text-[var(--on-surface-variant)] mb-4" />
+        <h1 className="text-2xl font-semibold">Coming Soon</h1>
+        <p className="text-[var(--on-surface-variant)] mb-4">
+          App is under development
         </p>
-        <Link 
-          href="/"
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--primary)] text-[var(--on-primary)] font-medium"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Back to Home
+        <Link href="/" className="flex items-center gap-2 text-sm">
+          <ChevronLeft className="w-4 h-4" /> Back
         </Link>
       </div>
     );
   }
 
-  const features = [
-    { icon: Zap, title: 'Fast Streaming', desc: 'Watch movies without buffering' },
-    { icon: Shield, title: 'Secure', desc: 'Your data is protected' },
-    { icon: Star, title: 'HD Quality', desc: 'Crystal clear video quality' },
-  ];
-
   return (
     <div className="min-h-screen bg-[var(--surface)]">
+
       {/* Header */}
-      <header className="sticky top-0 z-40 glass ghost-border">
-        <div className="flex items-center justify-between px-4 py-4 max-w-7xl mx-auto">
-          <Link
-            href="/"
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-[var(--surface)]/70 border-b border-white/5">
+        <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
+          <Link href="/" className="flex items-center gap-2 text-sm opacity-80 hover:opacity-100">
+            <ChevronLeft className="w-4 h-4" />
+            Back
           </Link>
-          <h1 className="font-display font-bold text-xl">Download App</h1>
-          <div className="w-10" />
+          <h1 className="font-semibold">Download App</h1>
+          <div />
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="px-4 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+      {/* Hero */}
+      <section className="px-4 py-16 text-center max-w-3xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1 text-xs rounded-full bg-[var(--primary)]/10 text-[var(--primary)] mb-5">
+            <Star className="w-3 h-3" />
+            Version {settings.app_version}
+          </div>
+
+          <h2 className="text-4xl md:text-5xl font-bold">
+            FilmyMela <span className="text-[var(--primary)]">Mobile</span>
+          </h2>
+
+          <p className="mt-4 text-[var(--on-surface-variant)]">
+            Experience seamless movie streaming on your mobile device.
+          </p>
+
+          <motion.button
+            onClick={handleDownload}
+            disabled={downloading || !settings.apk_url}
+            whileTap={{ scale: 0.96 }}
+            className="mt-8 inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-[var(--primary)] text-[var(--on-primary)] shadow-lg"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-sm font-medium mb-6">
-              <Star className="w-4 h-4" />
-              Latest Version {settings.app_version}
-            </div>
-            
-            <h2 className="text-4xl md:text-6xl font-display font-bold mb-6">
-              FilmyMela <span className="gradient-text">Mobile</span>
-            </h2>
-            
-            <p className="text-lg md:text-xl text-[var(--on-surface-variant)] mb-8 max-w-2xl mx-auto">
-              Experience the best of cinema on your mobile device. 
-              Stream thousands of movies anytime, anywhere.
-            </p>
+            {downloading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                Download APK
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </motion.button>
 
-            {/* Download Button */}
-            <motion.button
-              onClick={handleDownload}
-              disabled={downloading || !settings.apk_url}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--primary)] to-[var(--tertiary)] text-[var(--on-primary)] font-bold text-lg shadow-xl shadow-[var(--primary)]/30 disabled:opacity-50 overflow-hidden group"
-            >
-              {/* Shimmer effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-              />
-              
-              {downloading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Starting Download...
-                </>
-              ) : (
-                <>
-                  <Download className="w-6 h-6" />
-                  Download APK
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </motion.button>
-
-            <p className="mt-4 text-sm text-[var(--on-surface-variant)]">
-              Android 6.0+ required • {settings.app_version} MB
-            </p>
-          </motion.div>
-        </div>
+          <p className="text-xs mt-3 text-[var(--on-surface-variant)]">
+            Android 6.0+ supported
+          </p>
+        </motion.div>
       </section>
 
-      {/* App Preview Screenshots */}
-      {settings.preview_images?.length > 0 && (
-        <section className="px-4 py-12 bg-[var(--surface-container)]">
-          <div className="max-w-6xl mx-auto">
-            <h3 className="text-2xl font-display font-bold text-center mb-8">
-              App Preview
-            </h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {settings.preview_images.map((image, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  className="relative aspect-[9/19] rounded-2xl overflow-hidden border-4 border-[var(--surface)] shadow-xl"
-                >
-                  <Image
-                    src={image}
-                    alt={`App preview ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </motion.div>
-              ))}
-            </div>
+      {/* Premium Gallery */}
+      {!!settings.preview_images?.length && (
+        <section className="py-10">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold">App Experience</h3>
+            <p className="text-sm text-[var(--on-surface-variant)] mt-2">
+              Smooth, fast and immersive UI
+            </p>
           </div>
+
+          <PreviewGallery images={settings.preview_images} />
         </section>
       )}
 
       {/* Features */}
-      <section className="px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-2xl font-display font-bold text-center mb-8">
-            Why Choose Our App?
-          </h3>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="p-6 rounded-2xl bg-[var(--surface-container)] ghost-border text-center"
-              >
-                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center">
-                  <feature.icon className="w-7 h-7 text-[var(--primary)]" />
-                </div>
-                <h4 className="font-semibold text-lg mb-2">{feature.title}</h4>
-                <p className="text-[var(--on-surface-variant)] text-sm">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+      <section className="px-4 py-12 max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
+        {features.map((f, i) => (
+          <motion.div
+            key={f.title}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-6 rounded-xl bg-[var(--surface-container)] border border-white/5"
+          >
+            <f.icon className="w-6 h-6 text-[var(--primary)] mb-3" />
+            <h3 className="font-semibold">{f.title}</h3>
+            <p className="text-sm text-[var(--on-surface-variant)]">
+              {f.desc}
+            </p>
+          </motion.div>
+        ))}
       </section>
 
       {/* Release Notes */}
-      {settings.release_notes && (
-        <section className="px-4 py-12 bg-[var(--surface-container)]">
-          <div className="max-w-2xl mx-auto">
-            <h3 className="text-2xl font-display font-bold text-center mb-8">
-              What's New
-            </h3>
-            
-            <div className="p-6 rounded-2xl bg-[var(--surface)] ghost-border">
-              <ul className="space-y-3">
-                {settings.release_notes.split('\n').map((note, index) => (
-                  note.trim() && (
-                    <li key={index} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-[var(--primary)] mt-0.5 shrink-0" />
-                      <span className="text-[var(--on-surface-variant)]">{note.trim()}</span>
-                    </li>
-                  )
-                ))}
-              </ul>
-            </div>
+      {!!settings.release_notes && (
+        <section className="px-4 py-12 max-w-2xl mx-auto">
+          <h3 className="text-center font-semibold mb-6">What's New</h3>
+
+          <div className="space-y-3">
+            {settings.release_notes.split('\n').map((note, i) =>
+              note.trim() && (
+                <div key={i} className="flex gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--primary)] mt-0.5" />
+                  <span className="text-[var(--on-surface-variant)]">{note}</span>
+                </div>
+              )
+            )}
           </div>
         </section>
       )}
 
-      {/* CTA */}
-      <section className="px-4 py-12">
-        <div className="max-w-xl mx-auto text-center">
-          <h3 className="text-2xl font-display font-bold mb-4">
-            Ready to Get Started?
-          </h3>
-          <p className="text-[var(--on-surface-variant)] mb-6">
-            Download the app now and start watching your favorite movies.
-          </p>
-          
-          <motion.button
-            onClick={handleDownload}
-            disabled={downloading || !settings.apk_url}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-[var(--primary)] text-[var(--on-primary)] font-bold text-lg shadow-xl shadow-[var(--primary)]/30 disabled:opacity-50"
-          >
-            <Download className="w-6 h-6" />
-            Download Now
-          </motion.button>
-        </div>
-      </section>
     </div>
   );
 }
