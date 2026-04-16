@@ -1,30 +1,52 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function proxy(request) {
-  // Only check maintenance mode for public pages, not admin or API
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
   
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api') || pathname === '/maintenance') {
+  // Skip maintenance check for these paths
+  if (
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/api') || 
+    pathname === '/maintenance' ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon')
+  ) {
     return NextResponse.next();
   }
 
-  // Check maintenance mode from settings
+  // Check maintenance mode from Supabase directly
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/settings/maintenance`);
-    if (res.ok) {
-      const data = await res.json();
-      
-      if (data.maintenance_mode) {
-        // Redirect to maintenance page
-        const url = request.nextUrl.clone();
-        url.pathname = '/maintenance';
-        url.searchParams.set('message', data.maintenance_message || 'We are currently undergoing maintenance.');
-        return NextResponse.redirect(url);
-      }
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase env vars');
+      return NextResponse.next();
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data, error } = await supabase
+      .from('settings')
+      .select('maintenance_mode, maintenance_message')
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error('Maintenance check error:', error);
+      return NextResponse.next();
+    }
+    
+    // If maintenance mode is enabled, redirect to maintenance page
+    if (data?.maintenance_mode === true) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/maintenance';
+      url.searchParams.set('message', data.maintenance_message || 'We are currently undergoing maintenance.');
+      return NextResponse.redirect(url);
     }
   } catch (error) {
-    console.error('Maintenance check error:', error);
-    // Continue on error to avoid blocking users
+    console.error('Middleware error:', error);
   }
 
   return NextResponse.next();
