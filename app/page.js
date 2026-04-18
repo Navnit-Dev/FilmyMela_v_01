@@ -34,7 +34,7 @@ export default async function HomePage() {
         <div className="space-y-4 lg:space-y-8 pb-12">
           <MovieSection 
             title="Trending Now" 
-            movies={trendingMovies} 
+            movies={trendingMovies.reverse()} 
             viewAllHref="/movies?trending=true"
           />
           
