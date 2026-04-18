@@ -34,13 +34,13 @@ export default async function HomePage() {
         <div className="space-y-4 lg:space-y-8 pb-12">
           <MovieSection 
             title="Trending Now" 
-            movies={trendingMovies.reverse()} 
+            movies={trendingMovies} 
             viewAllHref="/movies?trending=true"
           />
           
           <MovieSection 
             title="Latest Releases" 
-            movies={latestMovies} 
+            movies={latestMovies.reverse()} 
             viewAllHref="/movies?sort=latest"
           />
           
