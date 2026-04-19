@@ -40,7 +40,7 @@ export default async function HomePage() {
           
           <MovieSection 
             title="Latest Releases" 
-            movies={latestMovies?.reverse()} 
+            movies={[...latestMovies]?.reverse()} 
             viewAllHref="/movies?sort=latest"
           />
           
