@@ -13,14 +13,14 @@ export default async function HomePage() {
     { movies: latestMovies },
     dynamicSections
   ] = await Promise.all([
-    getMovies({ featured: true, limit: 8 }),
+    getMovies({ featured: true, limit: 12 }),
     getMovies({ trending: true, limit: 12 }),
     getMovies({ limit: 12 }),
     getHomeSectionsWithMovies()
   ]);
 
   // Hero slides from featured movies
-  const heroMovies = featuredMovies.slice(0, 5);
+  const heroMovies = featuredMovies;
 
   return (
     <UserLayout>
@@ -40,7 +40,7 @@ export default async function HomePage() {
           
           <MovieSection 
             title="Latest Releases" 
-            movies={latestMovies.reverse()} 
+            movies={latestMovies?.reverse()} 
             viewAllHref="/movies?sort=latest"
           />
           
