@@ -40,7 +40,9 @@ export default async function HomePage() {
           
           <MovieSection 
             title="Latest Releases" 
-            movies={[...latestMovies]?.reverse()} 
+            movies={[...latestMovies].sort(
+  (a, b) => new Date(b.release_year) - new Date(a.release_year)
+)} 
             viewAllHref="/movies?sort=latest"
           />
           
