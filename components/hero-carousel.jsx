@@ -10,7 +10,7 @@ export function HeroCarousel({ movies }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const slides = movies || [];
+  const slides = movies.slice(0,6) || [];
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % slides.length);
