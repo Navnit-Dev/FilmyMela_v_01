@@ -71,10 +71,12 @@ export async function POST(request) {
     };
 
     // Insert movie using RPC to bypass schema cache issues
-    const { data, error } = await supabase
+    const { data: rpcData, error: rpcError } = await supabase
       .rpc('insert_movie_with_episodes', { movie_data: movieData });
 
-    if (error) {
+    let data = rpcData;
+
+    if (rpcError) {
       // Fallback to direct insert if RPC fails
       const { data: directData, error: directError } = await supabase
         .from('movies')
@@ -84,9 +86,9 @@ export async function POST(request) {
         })
         .select()
         .single();
-      
+
       if (directError) throw directError;
-      return NextResponse.json(directData, { status: 201 });
+      data = directData;
     }
 
     // Log activity
@@ -147,12 +149,12 @@ export async function POST(request) {
           });
           const textData = await textRes.json();
           if (textData.ok) {
-            console.log('Telegram text notification sent for movie:', data.name);
+            // console.log('Telegram text notification sent for movie:', data.name);
           } else {
             console.error('Telegram text fallback also failed:', textData);
           }
         } else {
-          console.log('Telegram photo notification sent for movie:', data.name, 'Message ID:', telegramData.result?.message_id);
+          // console.log('Telegram photo notification sent for movie:', data.name, 'Message ID:', telegramData.result?.message_id);
         }
       } else {
         console.log('Telegram not configured - enabled:', settings?.telegram_enabled, 'hasToken:', !!settings?.telegram_bot_token, 'hasChatId:', !!settings?.telegram_chat_id);

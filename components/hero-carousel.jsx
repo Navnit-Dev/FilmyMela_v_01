@@ -9,10 +9,15 @@ import { Play, ChevronLeft, ChevronRight, Info, Star, Clock } from 'lucide-react
 export function HeroCarousel({ movies }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   function getRandomMovies(arr, count) {
   const shuffled = [...arr];
-  
+
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -22,8 +27,9 @@ export function HeroCarousel({ movies }) {
 }
 
   const slides = useMemo(() => {
-  return movies ? getRandomMovies(movies, 6) : [];
-}, [movies]);
+  if (!movies || !isMounted) return [];
+  return getRandomMovies(movies, 6);
+}, [movies, isMounted]);
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % slides.length);
