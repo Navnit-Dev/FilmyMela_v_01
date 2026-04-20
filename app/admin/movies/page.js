@@ -60,11 +60,14 @@ export default function AdminMoviesPage() {
   const [movieToDelete, setMovieToDelete] = useState(null);
   const itemsPerPage = 10;
 
-  // Debounced search effect
+  // Debounced search effect - only trigger fetch after user stops typing
   useEffect(() => {
+    // Skip API fetch for single characters - wait for at least 2 chars or empty
+    if (searchQuery.length === 1) return;
+
     const timer = setTimeout(() => {
       fetchMovies();
-    }, 300); // 300ms debounce
+    }, 600); // 600ms debounce - waits for user to pause typing
 
     return () => clearTimeout(timer);
   }, [currentPage, searchQuery, filterHasScenes]);

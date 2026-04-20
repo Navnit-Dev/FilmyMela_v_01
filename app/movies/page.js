@@ -77,19 +77,21 @@ function MoviesContent() {
       const res = await fetch(`/api/movies?${queryParams}`);
       const data = await res.json();
 
+      const moviesData = data.movies || [];
+      
       if (reset) {
-        setMovies(data.movies);
+        setMovies(moviesData);
         setOffset(limit);
       } else {
         setMovies(prev => {
           const existingIds = new Set(prev.map(m => m.id));
-          const newMovies = data.movies.filter(m => !existingIds.has(m.id));
+          const newMovies = moviesData.filter(m => !existingIds.has(m.id));
           return [...prev, ...newMovies];
         });
         setOffset(prev => prev + limit);
       }
       
-      setHasMore(data.movies.length === limit);
+      setHasMore(moviesData.length === limit);
     } catch (error) {
       console.error('Error fetching movies:', error);
     } finally {
