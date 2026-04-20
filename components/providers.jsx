@@ -15,12 +15,14 @@ export function Providers({ children }) {
       {
         cookies: {
           getAll() {
-            return document.cookie.split(';').map((cookie) => {
+            if (typeof document === 'undefined') return [];
+            return document.cookie.split(';').filter(Boolean).map((cookie) => {
               const [name, ...rest] = cookie.trim().split('=');
-              return { name, value: rest.join('=') };
+              return { name: name.trim(), value: rest.join('=') };
             });
           },
           setAll(cookiesToSet) {
+            if (typeof document === 'undefined') return;
             cookiesToSet.forEach(({ name, value, options }) => {
               let cookieString = `${name}=${value}`;
               if (options?.path) cookieString += `; path=${options.path}`;
