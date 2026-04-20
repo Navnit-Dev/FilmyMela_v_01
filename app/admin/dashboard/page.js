@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
           {contentTypeCards.map((type, i) => (
             <Grid item xs={12} md={4} key={type.label}>
               <Fade in timeout={600 + i * 80}>
-                <Link href={type.href} style={{ textDecoration: 'none' }}>
+                <Link href={type.href} style={{ textDecoration: 'none' }} prefetch>
                   <Paper
                     sx={{
                       p: 2.5,
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
           {quickActions.map((action, i) => (
             <Grid item xs={12} sm={6} lg={3} key={action.title}>
               <Fade in timeout={800 + i * 80}>
-                <Link href={action.href} style={{ textDecoration: 'none' }}>
+                <Link href={action.href} style={{ textDecoration: 'none' }} prefetch>
                   <Card
                     sx={{
                       borderRadius: 3,
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
             <Box sx={{ px: 3, py: 2.5, display: 'flex', justifyContent: 'space-between' }}>
               <Typography fontWeight={700}>Recently Added</Typography>
 
-              <Link href="/admin/movies" style={{ textDecoration: 'none' }}>
+              <Link href="/admin/movies" style={{ textDecoration: 'none' }} prefetch>
                 <Typography variant="body2" color="primary">
                   View All
                 </Typography>
@@ -278,7 +278,7 @@ export default function AdminDashboardPage() {
                     </Box>
                   </Box>
 
-                  <Link href={`/admin/movies/${movie.id}/edit`}>
+                  <Link href={`/admin/movies/${movie.id}/edit`} prefetch>
                     <Button size="small" startIcon={<Edit />} sx={{ borderRadius: 2 }}>
                       Edit
                     </Button>

@@ -1,9 +1,30 @@
 import './globals.css';
+import { Inter, Manrope } from 'next/font/google';
+import dynamic from 'next/dynamic';
 import { Providers } from '@/components/providers';
-import { BootScreenProvider } from '@/components/boot-screen-provider';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import PopupModal from '@/components/popup-modal';
 import { AllStructuredData } from '@/components/structured-data';
+
+// Dynamic imports for heavy components (loading state only, no SSR option in Server Components)
+const BootScreenProvider = dynamic(() => import('@/components/boot-screen-provider').then(mod => mod.BootScreenProvider), {
+  loading: () => null,
+});
+
+const PopupModal = dynamic(() => import('@/components/popup-modal').then(mod => mod.default), {
+  loading: () => null,
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
+});
 
 export const metadata = {
   title: {
@@ -75,11 +96,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${inter.variable} ${manrope.variable}`}>
       <head>
+        {/* Preconnect for external domains */}
+        <link rel="preconnect" href="https://image.tmdb.org" />
+        <link rel="dns-prefetch" href="https://image.tmdb.org" />
+        <link rel="preconnect" href="https://api.telegram.org" />
         <AllStructuredData />
       </head>
-      <body className="antialiased pb-16 md:pb-0">
+      <body className="antialiased pb-16 md:pb-0 font-sans">
           <BootScreenProvider>
             <Providers>
               {children}

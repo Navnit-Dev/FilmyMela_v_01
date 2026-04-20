@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -60,12 +60,18 @@ export default function AdminMoviesPage() {
   const [movieToDelete, setMovieToDelete] = useState(null);
   const itemsPerPage = 10;
 
+  // Debounced search effect
   useEffect(() => {
-    fetchMovies();
+    const timer = setTimeout(() => {
+      fetchMovies();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
   }, [currentPage, searchQuery, filterHasScenes]);
 
-  const fetchMovies = async () => {
+  const fetchMovies = useCallback(async () => {
     try {
+      setLoading(true);
       const queryParams = new URLSearchParams({
         limit: String(itemsPerPage),
         offset: String((currentPage - 1) * itemsPerPage),
@@ -82,7 +88,7 @@ export default function AdminMoviesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, filterHasScenes]);
 
   const handleDelete = async () => {
     if (!movieToDelete) return;
@@ -209,7 +215,7 @@ export default function AdminMoviesPage() {
             </Link>
             <Typography variant="h6" fontWeight={700}>Movie Management</Typography>
           </Box>
-          <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }}>
+          <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }} prefetch>
             <Button variant="contained" startIcon={<Add />} sx={{ borderRadius: 3 }}>
               Add Movie
             </Button>
@@ -343,14 +349,14 @@ export default function AdminMoviesPage() {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Link href={`/movie/${movie.id}`} target="_blank" passHref style={{ textDecoration: 'none' }}>
+                      <Link href={`/movie/${movie.id}`} target="_blank" passHref style={{ textDecoration: 'none' }} prefetch>
                         <Tooltip title="View">
                           <IconButton size="small">
                             <OpenInNew fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </Link>
-                      <Link href={`/admin/movies/${movie.id}/edit`} passHref style={{ textDecoration: 'none' }}>
+                      <Link href={`/admin/movies/${movie.id}/edit`} passHref style={{ textDecoration: 'none' }} prefetch>
                         <Tooltip title="Edit">
                           <IconButton size="small">
                             <Edit fontSize="small" />
@@ -376,7 +382,7 @@ export default function AdminMoviesPage() {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                       {searchQuery ? 'Try a different search term' : 'Add your first movie to get started'}
                     </Typography>
-                    <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }}>
+                    <Link href="/admin/movies/new" passHref style={{ textDecoration: 'none' }} prefetch>
                       <Button variant="contained" startIcon={<Add />}>
                         Add Movie
                       </Button>

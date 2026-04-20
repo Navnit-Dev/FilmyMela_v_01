@@ -29,3 +29,17 @@ export function SkeletonHero() {
     <div className="w-full aspect-hero lg:aspect-[21/9] skeleton" />
   );
 }
+
+export function MovieSectionSkeleton() {
+  return (
+    <section className="py-8 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-8 skeleton rounded w-48" />
+          <div className="h-6 skeleton rounded w-20" />
+        </div>
+        <SkeletonGrid count={12} />
+      </div>
+    </section>
+  );
+}

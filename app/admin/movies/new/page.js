@@ -881,13 +881,14 @@ export default function MovieFormPage({ params }) {
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Poster URL</label>
+                        <label className="block text-sm font-medium mb-2">Poster URL *</label>
                         <input
                           type="url"
                           value={formData.poster_url || ''}
                           onChange={(e) => setFormData({ ...formData, poster_url: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30"
                           placeholder="https://example.com/poster.jpg"
+                          required
                         />
                         {formData.poster_url && (
                           <div className="mt-2">

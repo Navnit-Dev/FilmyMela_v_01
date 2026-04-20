@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback ,useMemo} from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Play, ChevronLeft, ChevronRight, Info, Star, Clock } from 'lucide-react';
 
 export function HeroCarousel({ movies }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     setIsMounted(true);
@@ -59,10 +60,10 @@ export function HeroCarousel({ movies }) {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, scale: 1.05 }}
+          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: shouldReduceMotion ? 0.1 : 0.6 }}
           className="absolute inset-0"
         >
           <Image
@@ -85,10 +86,10 @@ export function HeroCarousel({ movies }) {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, y: 25 }}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -25 }}
-              transition={{ duration: 0.4 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -25 }}
+              transition={{ duration: shouldReduceMotion ? 0.1 : 0.4 }}
               className="max-w-xl"
             >
               {/* Badges */}

@@ -19,10 +19,11 @@ export async function GET(request, { params }) {
     }
 
     // Return movie with genre and industry from movies table
+    // Industry is stored as a single value but form expects an array
     return NextResponse.json({
       ...movie,
       genre_names: movie.genre || [],
-      industry_names: movie.industry || []
+      industry_names: movie.industry ? [movie.industry] : []
     });
   } catch (error) {
     return NextResponse.json(
