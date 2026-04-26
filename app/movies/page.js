@@ -116,13 +116,13 @@ function MoviesContent() {
       timeoutId = setTimeout(() => {
         if (
           window.innerHeight + document.documentElement.scrollTop >=
-          document.documentElement.offsetHeight - 1000
+          document.documentElement.offsetHeight - 500
         ) {
           if (!loading && hasMore) {
             fetchMovies(false);
           }
         }
-      }, 200);
+      }, 100);
     };
 
     window.addEventListener('scroll', handleScroll);
