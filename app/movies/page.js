@@ -74,10 +74,20 @@ function MoviesContent() {
         sort: filters.sort
       });
 
+      console.log('Fetching movies with params:', queryParams.toString());
       const res = await fetch(`/api/movies?${queryParams}`);
+      console.log('Response status:', res.status);
+      
       const data = await res.json();
+      console.log('Response data:', data);
+
+      if (!res.ok) {
+        console.error('API error response:', data);
+        throw new Error(data.error || data.details || 'Failed to fetch movies');
+      }
 
       const moviesData = data.movies || [];
+      console.log('Movies data length:', moviesData.length);
       
       if (reset) {
         setMovies(moviesData);
