@@ -8,6 +8,7 @@ import { Footer } from '@/components/footer';
 import { MovieCard } from '@/components/movie-card';
 import { SkeletonGrid } from '@/components/skeletons';
 import UserLayout from '@/components/user-layout';
+import { createClient } from '@/lib/supabase-client';
 import { 
   Filter, 
   Grid3X3, 
@@ -39,19 +40,36 @@ function MoviesContent() {
 
   const limit = 20;
 
-  // Fetch filter options
+  // Fetch filter options directly from Supabase
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [indRes, genreRes, yearRes] = await Promise.all([
-          fetch('/api/industries'),
-          fetch('/api/genres'),
-          fetch('/api/years')
-        ]);
+        const supabase = createClient();
         
-        if (indRes.ok) setIndustries(await indRes.json());
-        if (genreRes.ok) setGenres(await genreRes.json());
-        if (yearRes.ok) setYears(await yearRes.json());
+        // Fetch industries
+        const { data: industryData } = await supabase
+          .from('movies')
+          .select('industry')
+          .eq('visible', true);
+        const uniqueIndustries = [...new Set(industryData?.map(m => m.industry).filter(Boolean))];
+        setIndustries(uniqueIndustries);
+        
+        // Fetch genres
+        const { data: genreData } = await supabase
+          .from('movies')
+          .select('genre')
+          .eq('visible', true);
+        const uniqueGenres = [...new Set(genreData?.flatMap(m => m.genre || []))].filter(Boolean);
+        setGenres(uniqueGenres);
+        
+        // Fetch years
+        const { data: yearData } = await supabase
+          .from('movies')
+          .select('release_year')
+          .eq('visible', true)
+          .order('release_year', { ascending: false });
+        const uniqueYears = [...new Set(yearData?.map(m => m.release_year).filter(Boolean))];
+        setYears(uniqueYears);
       } catch (error) {
         console.error('Error fetching filter options:', error);
       }
@@ -59,29 +77,53 @@ function MoviesContent() {
     fetchOptions();
   }, []);
 
-  // Fetch movies
+  // Fetch movies directly from Supabase
   const fetchMovies = useCallback(async (reset = false) => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams({
-        limit: String(limit),
-        offset: String(reset ? 0 : offset),
-        ...(filters.industry && { industry: filters.industry }),
-        ...(filters.genre && { genre: filters.genre }),
-        ...(filters.year && { year: filters.year }),
-        ...(filters.trending && { trending: 'true' }),
-        ...(filters.featured && { featured: 'true' }),
-        sort: filters.sort
-      });
+      const supabase = createClient();
+      const currentOffset = reset ? 0 : offset;
+      
+      let query = supabase
+        .from('movies')
+        .select('*', { count: 'exact' })
+        .eq('visible', true);
 
-      const res = await fetch(`/api/movies?${queryParams}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || data.details || 'Failed to fetch movies');
+      // Apply filters
+      if (filters.industry) {
+        query = query.eq('industry', filters.industry);
+      }
+      if (filters.genre) {
+        query = query.contains('genre', [filters.genre]);
+      }
+      if (filters.year) {
+        query = query.eq('release_year', parseInt(filters.year));
+      }
+      if (filters.trending) {
+        query = query.eq('trending', true);
+      }
+      if (filters.featured) {
+        query = query.eq('featured', true);
       }
 
-      const moviesData = data.movies || [];
+      // Apply sorting
+      if (filters.sort === 'latest') {
+        query = query.order('created_at', { ascending: false });
+      } else if (filters.sort === 'oldest') {
+        query = query.order('created_at', { ascending: true });
+      } else if (filters.sort === 'rating') {
+        query = query.order('rating', { ascending: false });
+      } else if (filters.sort === 'name') {
+        query = query.order('name', { ascending: true });
+      }
+
+      // Apply pagination
+      const { data, error, count } = await query
+        .range(currentOffset, currentOffset + limit - 1);
+
+      if (error) throw error;
+
+      const moviesData = data || [];
       
       if (reset) {
         setMovies(moviesData);
@@ -95,7 +137,7 @@ function MoviesContent() {
         setOffset(prev => prev + limit);
       }
       
-      setHasMore(moviesData.length === limit && offset + moviesData.length < data.count);
+      setHasMore(moviesData.length === limit && currentOffset + moviesData.length < (count || 0));
     } catch (error) {
       console.error('Error fetching movies:', error);
     } finally {

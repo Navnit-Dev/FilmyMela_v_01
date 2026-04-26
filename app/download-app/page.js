@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
+import { createClient } from '@/lib/supabase-client';
 import {
   Download,
   ChevronLeft,
@@ -85,11 +86,18 @@ export default function DownloadAppPage() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/app-download');
-      const data = await res.json();
-      setSettings(data);
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+      
+      if (error) throw error;
+      setSettings(data || { enabled: false });
     } catch (err) {
       console.error(err);
+      setSettings({ enabled: false });
     } finally {
       setLoading(false);
     }
@@ -105,7 +113,9 @@ export default function DownloadAppPage() {
     setDownloading(true);
 
     try {
-      fetch('/api/app-download/track', { method: 'POST' }).catch(() => {});
+      // Track download in background
+      const supabase = createClient();
+      supabase.rpc('track_app_download').catch(() => {});
       window.location.assign(settings.apk_url);
     } finally {
       setTimeout(() => setDownloading(false), 1500);

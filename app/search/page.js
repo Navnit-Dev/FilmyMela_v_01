@@ -8,6 +8,7 @@ import { Footer } from '@/components/footer';
 import { MovieCard } from '@/components/movie-card';
 import { SkeletonGrid } from '@/components/skeletons';
 import { Search, X, Filter, TrendingUp, Clock, Star, Film } from 'lucide-react';
+import { createClient } from '@/lib/supabase-client';
 
 import { useToast } from '@/components/toast';
 
@@ -49,7 +50,7 @@ export default function SearchPage() {
     }
   }, [query, adminUnlocked, showToast]);
 
-  // Search function
+  // Search function using direct Supabase query
   const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) {
       setMovies([]);
@@ -58,12 +59,22 @@ export default function SearchPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await res.json();
-      setMovies(data.movies || []);
+      const supabase = createClient();
+      
+      const { data, error } = await supabase
+        .from('movies')
+        .select('*')
+        .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,cast.cs.{${searchQuery}}`)
+        .eq('visible', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      
+      setMovies(data || []);
 
       // Save to recent searches
-      if (data.movies?.length > 0) {
+      if (data?.length > 0) {
         const newRecent = [searchQuery, ...recentSearches.filter(s => s !== searchQuery)].slice(0, 5);
         setRecentSearches(newRecent);
         localStorage.setItem('recentSearches', JSON.stringify(newRecent));
