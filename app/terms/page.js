@@ -3,6 +3,8 @@ export const metadata = {
   description: 'Terms of Service for FilmyMela - Rules and guidelines for using our platform.',
 };
 
+export const dynamic = 'force-static';
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-black text-white py-12 px-4 sm:px-6 lg:px-8">

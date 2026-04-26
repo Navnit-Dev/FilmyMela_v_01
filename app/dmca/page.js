@@ -3,6 +3,8 @@ export const metadata = {
   description: 'DMCA Notice and Takedown Policy for FilmyMela.',
 };
 
+export const dynamic = 'force-static';
+
 export default function DMCAPage() {
   return (
     <div className="min-h-screen bg-black text-white py-12 px-4 sm:px-6 lg:px-8">

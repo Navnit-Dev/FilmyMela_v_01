@@ -3,6 +3,8 @@ export const metadata = {
   description: 'Privacy Policy for FilmyMela - Learn how we protect your data and privacy.',
 };
 
+export const dynamic = 'force-static';
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-black text-white py-12 px-4 sm:px-6 lg:px-8">
