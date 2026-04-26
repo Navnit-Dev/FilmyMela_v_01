@@ -74,20 +74,14 @@ function MoviesContent() {
         sort: filters.sort
       });
 
-      console.log('Fetching movies with params:', queryParams.toString());
       const res = await fetch(`/api/movies?${queryParams}`);
-      console.log('Response status:', res.status);
-      
       const data = await res.json();
-      console.log('Response data:', data);
 
       if (!res.ok) {
-        console.error('API error response:', data);
         throw new Error(data.error || data.details || 'Failed to fetch movies');
       }
 
       const moviesData = data.movies || [];
-      console.log('Movies data length:', moviesData.length);
       
       if (reset) {
         setMovies(moviesData);
@@ -101,7 +95,7 @@ function MoviesContent() {
         setOffset(prev => prev + limit);
       }
       
-      setHasMore(moviesData.length === limit);
+      setHasMore(moviesData.length === limit && offset + moviesData.length < data.count);
     } catch (error) {
       console.error('Error fetching movies:', error);
     } finally {
@@ -116,19 +110,26 @@ function MoviesContent() {
 
   // Infinite scroll
   useEffect(() => {
+    let timeoutId;
     const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 1000
-      ) {
-        if (!loading && hasMore) {
-          fetchMovies(false);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (
+          window.innerHeight + document.documentElement.scrollTop >=
+          document.documentElement.offsetHeight - 1000
+        ) {
+          if (!loading && hasMore) {
+            fetchMovies(false);
+          }
         }
-      }
+      }, 200);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [loading, hasMore, fetchMovies]);
 
   const updateFilter = (key, value) => {
