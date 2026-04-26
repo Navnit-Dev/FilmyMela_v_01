@@ -8,24 +8,3 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Ensure API routes use Node.js runtime
-[functions]
-  node_bundler = "esbuild"
-
-# API routes need longer timeout for database operations
-[[functions.api-movies]]
-  path = "/api/movies"
-  timeout = 30
-
-[[functions.api-genres]]
-  path = "/api/genres"
-  timeout = 10
-
-[[functions.api-industries]]
-  path = "/api/industries"
-  timeout = 10
-
-[[functions.api-years]]
-  path = "/api/years"
-  timeout = 10
