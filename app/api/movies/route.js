@@ -8,6 +8,12 @@ export const revalidate = 0;
 
 export async function GET(request) {
   try {
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    });
+
     const { searchParams } = new URL(request.url);
     
     const limit = parseInt(searchParams.get('limit')) || 20;
@@ -41,8 +47,15 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('API Error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      hint: error.hint,
+      details: error.details
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch movies' },
+      { error: 'Failed to fetch movies', details: error.message },
       { status: 500 }
     );
   }
