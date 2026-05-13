@@ -32,7 +32,7 @@ export const metadata = {
     template: '%s | FilmyMela'
   },
   description: 'Discover, stream, and download your favorite movies. A premium cinematic experience with Hollywood, Bollywood, and more.',
-  keywords: ['movies', 'streaming', 'download', 'cinema', 'films', 'hollywood', 'bollywood', 'tollywood', 'watch online', 'hd movies'],
+  keywords: ['movies', 'streaming', 'download', 'cinema', 'films', 'hollywood', 'bollywood', 'tollywood', 'watch online', 'hd movies','movie download','download','filmfly','filmymela','filmyzila','hdhub4u','cinewood','vegamovies','bollywood','rareanimes','pikahd','anime','hindi dubbed','hindi anime','hindi dubbed anime'],
   authors: [{ name: 'FilmyMela' }],
   creator: 'FilmyMela',
   publisher: 'FilmyMela',
